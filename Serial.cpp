@@ -1,0 +1,54 @@
+#include "Serial.h"
+#include <Arduino.h>
+
+volatile unsigned char *myUCSR0A = (unsigned char*)0x00C0;
+volatile unsigned char *myUCSR0B = (unsigned char*)0x00C1;
+volatile unsigned char *myUCSR0C = (unsigned char*)0x00C2;
+volatile unsigned int  *myUBRR0  = (unsigned int*)0x00C4;
+volatile unsigned char *myUDR0   = (unsigned char*)0x00C6;
+
+// ==================== UART (no Serial lib) ==============
+void U0init(int U0baud) {
+  unsigned long FCPU = 16000000UL;      // Mega 2560 clock
+
+  *myUCSR0A = 0x00;                     // U2X0=0 (normal 16x)
+  *myUCSR0B = 0x18;                     // RXEN0=1, TXEN0=1
+  *myUCSR0C = 0x06;                     // 8N1: UCSZ01=1, UCSZ00=1
+
+  unsigned int tbaud = (FCPU / (16UL * U0baud)) - 1;
+  *myUBRR0 = tbaud;                     // set baud
+}
+
+void U0putchar(unsigned char c) {
+  while ((*myUCSR0A & TBE) == 0) { }    // wait while UDRE0==0
+  *myUDR0 = c;
+}
+
+void uart_print_str(const char *s) {
+  while (*s) {
+    U0putchar((unsigned char)*s++);
+  }
+}
+
+void uart_print_crlf(void) {
+  U0putchar('\r');
+  U0putchar('\n');
+}
+
+// Print ASCII digits
+void uart_print_uint(unsigned int v) {
+  char buf[5];  // up to "1023"
+  int i = 0;
+
+  if (v == 0) {
+    U0putchar('0');
+    return;
+  }
+  while (v > 0 && i < 4) {
+    buf[i++] = (char)('0' + (v % 10));
+    v /= 10;
+  }
+  while (i--) {
+    U0putchar(buf[i]);          // send in correct order
+  }
+}
