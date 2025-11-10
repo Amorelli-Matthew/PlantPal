@@ -7,7 +7,7 @@ volatile unsigned char *myUCSR0C = (unsigned char*)0x00C2;
 volatile unsigned int  *myUBRR0  = (unsigned int*)0x00C4;
 volatile unsigned char *myUDR0   = (unsigned char*)0x00C6;
 
-// ==================== UART (no Serial lib) ==============
+
 void U0init(int U0baud) {
   unsigned long FCPU = 16000000UL;      // Mega 2560 clock
 

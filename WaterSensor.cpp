@@ -40,3 +40,13 @@ unsigned int adc_read(unsigned char adc_channel) {
   // read 10-bit result (ADCL then ADCH; using 16-bit IO pointer)
   return *my_ADC_DATA;                   // 0..1023 (right-adjusted)
 }
+
+int ReadWaterSensor()
+{
+    //gather a few samples for stability
+  unsigned int sum = 0;
+  for (int i = 0; i < AVG_SAMPLES; i++) {
+    sum += adc_read(0);         // A0 = channel 0
+  }
+  return (unsigned int)(sum / AVG_SAMPLES);
+}
