@@ -10,7 +10,7 @@ extern "C" {
 #define TBE 0x20  // UDRE0: Transmit Buffer Empty
 
 
-// UART0 registers 
+// UART0 registers for water sample 
 extern volatile unsigned char *myUCSR0A; 
 extern volatile unsigned char *myUCSR0B;
 extern volatile unsigned char *myUCSR0C;
@@ -18,10 +18,12 @@ extern volatile unsigned int  *myUBRR0;
 extern volatile unsigned char *myUDR0;
 
 
-
+//init medthod
 void U0init(int U0baud);
 void U0putchar(unsigned char c);
 
+
+//printing methods, use these instead of printf
 void uart_print_str(const char *s);
 void uart_print_uint(unsigned int v);
 void uart_print_crlf(void);

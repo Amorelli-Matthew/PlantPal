@@ -6,14 +6,17 @@ extern "C" {
 #endif
 
 #define AVG_SAMPLES 8
-//ADC registers
+
+//ADC registers for water
 extern volatile unsigned char *my_ADMUX; 
 extern volatile unsigned char *my_ADCSRB; 
 extern volatile unsigned char *my_ADCSRA;
 extern volatile unsigned int  *my_ADC_DATA; // ADCL/ADCH (right-adjusted)
 
+//variable to store water senesor value
 static unsigned int WaterSensorValue = 0;
 
+//methods to initilize water sensor and read the sensor
  void adc_init(void);
  unsigned int adc_read(unsigned char adc_channel);
 

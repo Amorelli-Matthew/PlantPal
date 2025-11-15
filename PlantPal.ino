@@ -1,11 +1,13 @@
 #include "Serial.h"
 #include "WaterSensor.h"
-#include "LCDScreen.h"
+//#include "LCDScreen.h"
+#include "Button.h"
 
 // water full at 385
-//watter medium at 
+//water medium at 360 on the sensor
 #define HIGH_LEVEL 385   //380 via arduino 5 port but 385 if plugged into breadboard and it has its own power supply
 #define MID_LEVEL 360
+
 
 // enum Status {
 //   Disabled =0;
@@ -17,7 +19,9 @@
 
 void setup() {
   U0init(9600);   
-  //adc_init();   
+  //adc_init();
+  StartStopButtonInit();
+  ResetButtonInit();   
 }
 
 

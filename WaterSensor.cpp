@@ -1,5 +1,7 @@
 #include "WaterSensor.h"
 
+
+//pointers to regs that interact with the sample
 volatile unsigned char *my_ADMUX   = (unsigned char*)0x007C; 
 volatile unsigned char *my_ADCSRB  = (unsigned char*)0x007B; 
 volatile unsigned char *my_ADCSRA  = (unsigned char*)0x007A;
@@ -21,7 +23,7 @@ void adc_init(void) {
   *my_ADMUX &= ~(1 << 7);                // REFS1 = 0
   *my_ADMUX |=  (1 << 6);                // REFS0 = 1  (AVcc with cap)
   *my_ADMUX &= ~(1 << 5);                // ADLAR = 0  (right adjust)
-  *my_ADMUX &= ~0x1F;                    // MUX4:0 = 00000 (ADC0)
+  *my_ADMUX &= ~0x1F;                    // MUX4 = 00000 (ADC0)
 }
 
 unsigned int adc_read(unsigned char adc_channel) {
@@ -43,10 +45,11 @@ unsigned int adc_read(unsigned char adc_channel) {
 
 int ReadWaterSensor()
 {
-    //gather a few samples for stability
+    //gather 8 samples for stability
   unsigned int sum = 0;
   for (int i = 0; i < AVG_SAMPLES; i++) {
     sum += adc_read(0);         // A0 = channel 0
   }
+  //return the average of samples inorder to get a stable sample value
   return (unsigned int)(sum / AVG_SAMPLES);
 }

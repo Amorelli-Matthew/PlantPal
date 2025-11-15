@@ -1,0 +1,1 @@
+//methods to help distplay the lcd screen
