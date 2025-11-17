@@ -36,8 +36,8 @@ void StartStopButtonInit()
 void ResetButtonInit()
 {
     // Configure pin 36 as input with pull-up like using pinMode
-  *my_DDRC  &= ~(1 << PC1_BIT);  // input
-  *my_PORTC |=  (1 << PC1_BIT);  // enable pull-up
+  *my_DDRC  &= ~(1 << 1);  // input
+  *my_PORTC |=  (1 << 1);  // enable pull-up
 }
 
 
