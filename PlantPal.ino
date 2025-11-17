@@ -43,7 +43,8 @@ void loop(void) {
 
     readResetButton();          // Handle Reset button
        // Reflect state on LEDs
-    ledStatus();             
+    ledStatus();     
+
     switch(ProgramStatus) {
       case DISABLED:
         break;
@@ -111,6 +112,7 @@ void readResetButton(void) {
         stableState = reading;
 
         if (stableState == LOW) {
+
             // Reset Button is pressed: TODO implement reset logic.
             if (ProgramStatus == ERROR)
             {
@@ -176,9 +178,6 @@ void ledStatus(void) {
 
         case ERROR:
             // Red LED on, others off
-            break;
-
-        default:
             break;
     }
 }
