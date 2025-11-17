@@ -97,7 +97,7 @@ void readResetButton(void) {
     currentTime = micros();
 
     // Direct hardware read from the reset button
-    reading = ((*my_PINC & (1 << PC1_BIT)) ? HIGH : LOW);
+    reading = ((*my_PINC & (1 << 1)) ? HIGH : LOW);
 
     // If this button's state is not the same as the last one
     // store the time and update lastReading (used for debouncing)
