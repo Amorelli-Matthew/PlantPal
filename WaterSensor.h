@@ -1,6 +1,9 @@
 #ifndef WATERSENSOR_H
 #define WATERSENSOR_H
 
+//Use pin A0 for the S pin on the little sensor and plug plus and minus into the breadboard's plus and minuses respectively 
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
