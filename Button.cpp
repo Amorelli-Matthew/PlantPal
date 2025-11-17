@@ -11,7 +11,7 @@ unsigned long previousTime = 0;
 unsigned long currentTime = 0;
 
 volatile bool StartStopButtonEvent;    
-volatile bool ProgramStatus; 
+//volatile bool ProgramStatus; 
 
 //vars for the last reading
  int lastReading  = HIGH;
@@ -40,63 +40,8 @@ void ResetButtonInit()
   *my_PORTC |=  (1 << PC1_BIT);  // enable pull-up
 }
 
-void readResetButton()
-{
-  //so Professor B says that mills doesnt work here but Micros works as it mesures microseconds imo
-    currentTime = micros();
-
-  // Direct hardware read from the reset button
-  reading = ((*my_PINC & (1 << PC1_BIT)) ? HIGH : LOW);
-
-  //checks to see if this buttends state is not the same as the last one
-  //if so, store the previous timne as the current time and the lastReading as the current reading
-  // used in Debouncing
-  if (reading != lastReading) {
-    previousTime = currentTime;
-    lastReading = reading;
-  }
-
-  //check the difference in time is greater or equal to the time delay for debouncing and check if the reading is not the same as the stable reading
-  if ((currentTime - previousTime) >= RESET_DEBOUNCE_US && reading != stableState) {
-    stableState = reading;
-
-    if (stableState == LOW) {
-     //Button is pressed now impliment starting logic...
-    }
-  }
-}
 
   
-void CheckifProgramIsOnOrOff()
-{
-  
-  //if Button is Pressed
-  if (StartStopButtonEvent) {
-    StartStopButtonEvent = 0; //Reset StartStopButtonEvent back to zero
-          
-     //check if the system is on or off
-     switch(ProgramStatus)
-    { 
-      case LOW:
-      
-       //starts the program
-        ProgramStatus =1;    
-        //  Serial.println("Program on!");
-          break;
-      
-      case HIGH:
-      //turns off the program!
-        ProgramStatus = 0;
-      //  Serial.println("Program off!");
-        break;
-
-  }          
-       
-  }
-  
-
-}
-
 void StartStopISR()
 {
   //get the current time

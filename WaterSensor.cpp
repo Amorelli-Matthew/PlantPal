@@ -1,5 +1,5 @@
 #include "WaterSensor.h"
-
+#include "Serial.h"
 
 //pointers to regs that interact with the sample
 volatile unsigned char *my_ADMUX   = (unsigned char*)0x007C; 
@@ -53,3 +53,8 @@ int ReadWaterSensor()
   //return the average of samples inorder to get a stable sample value
   return (unsigned int)(sum / AVG_SAMPLES);
 }
+
+ 
+
+
+

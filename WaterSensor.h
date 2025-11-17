@@ -7,6 +7,11 @@ extern "C" {
 
 #define AVG_SAMPLES 8
 
+// water full at 385
+//water medium at 360 on the sensor
+#define HIGH_LEVEL 385   //380 via arduino 5 port but 385 if plugged into breadboard and it has its own power supply
+#define MID_LEVEL 360
+
 //ADC registers for water
 extern volatile unsigned char *my_ADMUX; 
 extern volatile unsigned char *my_ADCSRB; 
@@ -19,6 +24,7 @@ static unsigned int WaterSensorValue = 0;
 //methods to initilize water sensor and read the sensor
  void adc_init(void);
  unsigned int adc_read(unsigned char adc_channel);
+
 
 
 #ifdef __cplusplus
