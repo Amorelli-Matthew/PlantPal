@@ -1,20 +1,16 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //UART bit masks
 #define RDA 0x80  // RXC0: Receive Data Available
 #define TBE 0x20  // UDRE0: Transmit Buffer Empty
 
 
-// UART0 registers for water sample 
-extern volatile unsigned char *myUCSR0A; 
+// UART0 registers for water sample
+extern volatile unsigned char *myUCSR0A;
 extern volatile unsigned char *myUCSR0B;
 extern volatile unsigned char *myUCSR0C;
-extern volatile unsigned int  *myUBRR0;
+extern volatile unsigned int *myUBRR0;
 extern volatile unsigned char *myUDR0;
 
 
@@ -23,14 +19,15 @@ void U0init(int U0baud);
 void U0putchar(unsigned char c);
 
 
-//printing methods, use these instead of printf
-void uart_print_str(const char *s);
-void uart_print_uint(unsigned int v);
-void uart_print_crlf(void);
+//printing methods
+void print(const char *s);
+void print(unsigned int v);
+void print_crlf(void);
 
-
-#ifdef __cplusplus
-}
-#endif
+//print line versions
+//bascially add in the crlf
+void println(const char *s);
+void println(unsigned int v);
+void println(double value, unsigned int decimals);
 
 #endif
