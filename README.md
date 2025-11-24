@@ -6,3 +6,6 @@ An small soil-moisture monitoring system that runs on the Arduino Mega 2560. It 
 
 ## License Notice
 Licensed as GPLV3 See `LICENSE` for details
+
+## Third Party License notice
+

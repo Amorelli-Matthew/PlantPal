@@ -46,22 +46,30 @@ void loop(void) {
 
   switch (ProgramStatus) {
     case DISABLED:
+        //track if pumps off, if not then turn water pumpoff
+        //sensors off
+        //print to lcd: system disabled
+        //
       break;
     case IDLE:
-      //waterlevelcheck();
+      waterlevelcheck();
+      
+      READANDDISPLAYSENSOR();
       // Later: soil moisture check & pump control can be added here
+      
       break;
 
     case RUNNING:
+        //run water and other logic
+        waterlevelcheck();
+        READANDDISPLAYSENSOR();
       break;
 
     case ERROR:
+    //for error handling
+    //force pump off
       break;
   }
-
-  READANDDISPLAYSENSOR();
-
-  // waterlevelcheck();
 }
 
 // Checks if Start/Stop button event occurred and toggles system state
@@ -128,7 +136,6 @@ static unsigned long lastWaterCheckTime = 0;
 
 // Method that checks how high the water is
 void waterlevelcheck(void) {
-
 
   // Get the current time
   currentTime = millis();
