@@ -7,7 +7,7 @@ volatile unsigned char *my_ADCSRB = (unsigned char *)0x007B;
 volatile unsigned char *my_ADCSRA = (unsigned char *)0x007A;
 volatile unsigned int *my_ADC_DATA = (unsigned int *)0x0078;  // ADCL/ADCH (right-adjusted)
 
-
+ unsigned int WaterSensorValue = 0;
 void adc_init(void) {
   // ADCSRA: enable ADC, prescaler=128 for 16 MHz -> 125 kHz ADC clock
   *my_ADCSRA |= (1 << 7);                    // ADEN = 1

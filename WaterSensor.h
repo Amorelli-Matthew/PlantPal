@@ -17,7 +17,7 @@ extern volatile unsigned char *my_ADCSRA;
 extern volatile unsigned int *my_ADC_DATA;  // ADCL/ADCH (right-adjusted)
 
 //variable to store water senesor value
-static unsigned int WaterSensorValue = 0;
+extern unsigned int WaterSensorValue;
 
 //methods to initilize water sensor and read the sensor
 void adc_init(void);
