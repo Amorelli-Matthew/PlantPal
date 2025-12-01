@@ -3,7 +3,7 @@
 //defines the actual dht object
 dht DHT;
 
- int temperature = 0;
+int temperature = 0;
 int humidity = 0;
 
 // Use a separate timing variable so we don't interfere with button debounce
@@ -36,8 +36,6 @@ void printTempandHumanity(int soil, int temp, int humanity)
 
   sprintf(line2,"T:%dC H:%d%%", temp, humanity);
 
-  //display the printed result
- // printDoubleLine(line1,line2);
+  //display the printed result via lcd
 
- 
 }
