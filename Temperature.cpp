@@ -1,5 +1,4 @@
 #include "Temperature.h"
-#include "StatusCodes.h"
 //defines the actual dht object
 dht DHT;
 

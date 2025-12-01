@@ -1,8 +1,9 @@
 #ifndef TEMPERATURE_H
 #define TEMPERATURE_H
 #define DHT11_PIN 7
-#include <dht.h> //install the DHTLib library
 #include "LCDScreen.h"
+#include "StatusCodes.h"
+#include <dht.h> //install the DHTLib library
 #include <math.h>
 
 //grab the dht.h lib from 
