@@ -54,7 +54,7 @@ void loop(void) {
     case IDLE:
       waterlevelcheck();
       
-      READANDDISPLAYSENSOR();
+      ReadTempature();
       // Later: soil moisture check & pump control can be added here
       
       break;
@@ -62,7 +62,7 @@ void loop(void) {
     case RUNNING:
         //run water and other logic
         waterlevelcheck();
-        READANDDISPLAYSENSOR();
+        ReadTempature();
       break;
 
     case ERROR:
