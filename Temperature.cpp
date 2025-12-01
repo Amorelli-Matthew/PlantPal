@@ -36,6 +36,6 @@ void printTempandHumanity(int soil, int temp, int humanity)
 
   sprintf(line2,"T:%dC H:%d%%", temp, humanity);
 
-  //display the printed result via lcd
+  //display the result via lcd
 
 }
