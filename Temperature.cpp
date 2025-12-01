@@ -6,8 +6,7 @@ dht DHT;
 int temperature = 0;
 int humidity = 0;
 
-// Use a separate timing variable so we don't interfere with button debounce
- unsigned long lastTempCheckTime = 0;
+unsigned long lastTempCheckTime = 0;
 
 int ReadTempature() {
 
@@ -30,6 +29,22 @@ int ReadTempature() {
 
   // No new sample; treat as "no error, keep old values"
   return DHTLIB_OK;
+}
+
+void TempandHumanitySensorCheck() {
+
+  int status = ReadTempature();
+
+  if (status != DHTLIB_OK) {
+
+    bool tempInvalid = (temperature < 0 || temperature > 50);
+    bool humidityInvalid = (humidity < 20 || humidity > 90);
+
+    if (tempInvalid || humidityInvalid) {
+      ProgramStatus = ERROR;
+      ErrorCode = ERR_DHT_SENSOR_FAULT;
+    }
+  }
 }
 
 

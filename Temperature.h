@@ -12,12 +12,12 @@ extern dht DHT;
 extern int temperature;
 extern int humidity;
 
-// Use a separate timing variable so we don't interfere with button debounce
+//store the last tempatures checked time
 extern unsigned long lastTempCheckTime;
 extern unsigned long currentTime;
 
 int ReadTempature();
 void printTempandHumanity(int s, int t, int d);
-
+void TempandHumanitySensorCheck();
 
 #endif

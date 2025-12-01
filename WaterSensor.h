@@ -1,6 +1,8 @@
 #ifndef WATERSENSOR_H
 #define WATERSENSOR_H
-
+#include "Serial.h"
+#include "StatusCodes.h"
+#include <Arduino.h>
 //Use pin A0 for the S pin on the little sensor and plug plus and minus into the breadboard's plus and minuses respectively
 
 #define AVG_SAMPLES 8
@@ -19,8 +21,11 @@ extern volatile unsigned int *my_ADC_DATA;  // ADCL/ADCH (right-adjusted)
 //variable to store water senesor value
 extern unsigned int WaterSensorValue;
 
+extern unsigned long lastWaterCheckTime;
+extern unsigned long currentTime;
+
 //methods to initilize water sensor and read the sensor
 void adc_init(void);
 unsigned int adc_read(unsigned char adc_channel);
-
+void waterlevelcheck(void);
 #endif

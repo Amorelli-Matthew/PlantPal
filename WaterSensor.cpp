@@ -1,5 +1,4 @@
 #include "WaterSensor.h"
-#include "Serial.h"
 
 //pointers to regs that interact with the sample
 volatile unsigned char *my_ADMUX = (unsigned char *)0x007C;
@@ -8,6 +7,10 @@ volatile unsigned char *my_ADCSRA = (unsigned char *)0x007A;
 volatile unsigned int *my_ADC_DATA = (unsigned int *)0x0078;  // ADCL/ADCH (right-adjusted)
 
  unsigned int WaterSensorValue = 0;
+
+// Use a separate timing variable so we don't interfere with button debounce
+static unsigned long lastWaterCheckTime = 0;
+
 void adc_init(void) {
   // ADCSRA: enable ADC, prescaler=128 for 16 MHz -> 125 kHz ADC clock
   *my_ADCSRA |= (1 << 7);                    // ADEN = 1
@@ -51,4 +54,33 @@ int ReadWaterSensor() {
   }
   //return the average of samples inorder to get a stable sample value
   return (unsigned int)(sum / AVG_SAMPLES);
+}
+
+// Method that checks how high the water is
+void waterlevelcheck(void) {
+
+  // Get the current time
+  currentTime = millis();
+
+  // Read the water every few seconds
+  if ((currentTime - lastWaterCheckTime) >= 3000UL) {
+    lastWaterCheckTime = currentTime;
+
+    // Assume WaterSensorValue is updated elsewhere (ADC / ISR / WaterSensor module)
+    if (WaterSensorValue > HIGH_LEVEL) {
+      print("Water Level: High at ");
+      println(WaterSensorValue);
+
+    } else if (WaterSensorValue <= HIGH_LEVEL && WaterSensorValue >= MID_LEVEL) {
+      print("Water Level: Medium at ");
+      println(WaterSensorValue);
+
+    } else {
+      // If water level low, then set ProgramStatus to ERROR and set the error satus to low water
+      ProgramStatus = ERROR;
+      ErrorCode = ERR_LOW_WATER;
+      print("Water Level: Low at ");
+      println(WaterSensorValue);
+    }
+  }
 }
