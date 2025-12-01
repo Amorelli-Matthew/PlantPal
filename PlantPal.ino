@@ -12,9 +12,6 @@ unsigned long currentTime = 0;
 //prototypes
 void CheckifProgramIsOnOrOff(void);
 void readResetButton(void);
-//void waterlevelcheck(void);
-//void soilCheck(void);
-//void TempandHumanitySensorCheck(void);
 void ledStatus(void);
 
 void setup(void) {
@@ -41,7 +38,8 @@ void loop(void) {
   CheckifProgramIsOnOrOff();  // Handle Start/Stop button flag
 
   readResetButton();  // Handle Reset button
-                      // Reflect state on LEDs
+
+ // Reflect state on LEDs
   ledStatus();
 
   switch (ProgramStatus) {
