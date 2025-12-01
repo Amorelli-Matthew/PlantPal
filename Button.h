@@ -2,7 +2,7 @@
 #define BUTTON_H
 #include <Arduino.h>
 #include "Serial.h"
-
+#include "statuscodes.h"
 //use the pins 2 and 36 for the startandstop button and the reset button respectively
 
 #define StartStopButtonPin 2

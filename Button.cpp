@@ -8,7 +8,6 @@ volatile unsigned char* my_DDRC = (volatile unsigned char*)0x27;
 volatile unsigned char* my_PORTC = (volatile unsigned char*)0x28;
 
 unsigned long previousTime = 0;
-unsigned long currentTime = 0;
 
 volatile bool StartStopButtonEvent;
 

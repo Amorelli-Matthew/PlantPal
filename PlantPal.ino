@@ -3,19 +3,52 @@
 #include "Button.h"
 #include "Logging.h"
 #include "Temperature.h"
-enum Status {
-  DISABLED = 0,
-  IDLE = 1,
-  RUNNING = 2,
-  ERROR = 3,
-};
+#include "StatusCodes.h"
+// enum Status {
+//   DISABLED = 0,
+//   IDLE = 1,
+//   RUNNING = 2,
+//   ERROR = 3,
+// };
 
-enum Status ProgramStatus = DISABLED;
+// enum ErrorCodes {
+//   NONE = 0,
+
+//   //1xx: Sensor & Data Errors
+//   ERR_SOIL_ADC_RANGE = 101,
+//   ERR_SOIL_ADC_SATURATED = 102,
+//   ERR_DHT_TIMEOUT = 111,
+//   ERR_DHT_SENSOR_FAULT = 112,
+
+//   //2xx: Pump / Motor Errors
+//   ERR_PUMP_TIMEOUT = 201,
+//   ERR_PUMP_NO_CURRENT = 202,
+//   ERR_PUMP_OVERCURRENT = 203,
+
+//   //3xx: Environmental Condition Errors
+//   ERR_LOW_WATER = 301,
+//   ERR_SOIL_NOT_RECOVERING = 302,
+
+//   //4xx: System / Logic Errors
+//   ERR_RTC_FAILURE = 401,
+//   ERR_INIT_FAILURE = 402,
+//   ERR_UNEXPECTED_STATE = 403,
+//   ERR_UNEXPECTED_RESTART = 404,
+// };
+
+
+
+Status ProgramStatus = DISABLED;
+ErrorCodes ErrorCode = NONE;
+
+unsigned long currentTime = 0;
 
 //prototypes
 void CheckifProgramIsOnOrOff(void);
 void readResetButton(void);
 void waterlevelcheck(void);
+void soilCheck(void);
+void TempandHumanitySensorCheck(void);
 void ledStatus(void);
 
 void setup(void) {
@@ -35,6 +68,7 @@ void setup(void) {
   // TODO: Logging init
 
   ProgramStatus = DISABLED;
+  ErrorCode = NONE;
 }
 
 void loop(void) {
@@ -46,28 +80,31 @@ void loop(void) {
 
   switch (ProgramStatus) {
     case DISABLED:
-        //track if pumps off, if not then turn water pumpoff
-        //sensors off
-        //print to lcd: system disabled
-        //
+      //track if pumps off, if not then turn water pumpoff
+      //sensors off
+      //print to lcd: system disabled
+      //
       break;
     case IDLE:
       waterlevelcheck();
-      
+      //soil check
+
       ReadTempature();
       // Later: soil moisture check & pump control can be added here
-      
+
       break;
 
     case RUNNING:
-        //run water and other logic
-        waterlevelcheck();
-        ReadTempature();
+      //run water and other logic
+      waterlevelcheck();
+      ReadTempature();
       break;
 
     case ERROR:
-    //for error handling
-    //force pump off
+      //for error handling
+      //check what error message it is
+      //print error message
+      //force pump off
       break;
   }
 }
@@ -94,6 +131,7 @@ void CheckifProgramIsOnOrOff(void) {
       case ERROR:
         // Turns off the program from any active state
         ProgramStatus = DISABLED;
+        ErrorCode = NONE;
         println("Program off!");
         break;
     }
@@ -154,16 +192,33 @@ void waterlevelcheck(void) {
       println(WaterSensorValue);
 
     } else {
-      // If water level low, then set ProgramStatus to ERROR
+      // If water level low, then set ProgramStatus to ERROR and set the error satus to low water
       ProgramStatus = ERROR;
-
+      ErrorCode = ERR_LOW_WATER;
       print("Water Level: Low at ");
       println(WaterSensorValue);
     }
   }
 }
 
+void soilCheck() {
+}
 
+void TempandHumanitySensorCheck() {
+
+  int status = ReadTempature();
+
+  if (status != DHTLIB_OK) {
+
+    bool tempInvalid = (temperature < 0 || temperature > 50);
+    bool humidityInvalid = (humidity < 20 || humidity > 90);
+
+    if (tempInvalid || humidityInvalid) {
+      ProgramStatus = ERROR;
+      ErrorCode = ERR_DHT_SENSOR_FAULT;
+    }
+  }
+}
 // Display LED status based on current ProgramStatus
 void ledStatus(void) {
   switch (ProgramStatus) {
