@@ -31,11 +31,46 @@ void StartStopISR() {
 
   //check the difference in time and see if its been after 10 microseconds
   //if so, store the current time into the previous time variable and then invert the startStopButton button events state.
-  if ((currentTime - previousTime) >= (STARTSTOP_DEBOUNCE_US)) {
-    previousTime = currentTime;
+  if ((currentTime - startStopPreviousTime) >= (STARTSTOP_DEBOUNCE_US)) {
+    startStopPreviousTime = currentTime;
     StartStopButtonEvent = !StartStopButtonEvent;
   }
 }
+
+
+// method for reset button
+void readResetButton(void) {
+  // Professor said millis() isn't ideal here, so use micros()
+  currentTime = micros();
+
+  // Direct hardware read from the reset button
+  reading = ((*my_PINC & (1 << 1)) ? HIGH : LOW);
+
+  // If this button's state is not the same as the last one
+  // store the time and update lastReading (used for debouncing)
+  if (reading != lastReading) {
+    resetPreviousTime = currentTime;
+    lastReading = reading;
+  }
+
+  // If enough time has passed and the reading is stable
+  if ((currentTime - resetPreviousTime) >= RESET_DEBOUNCE_US && reading != stableState) {
+    stableState = reading;
+
+    if (stableState == LOW) {
+
+      // Reset Button is pressed: TODO implement reset logic.
+      if (ProgramStatus == ERROR) {
+      }
+
+      if (ProgramStatus == IDLE) {
+        //Turn off the program
+       ProgramStatus = DISABLED;
+      }
+    }
+  }
+}
+
 
 
 

@@ -24,5 +24,5 @@ print(now.minute(),10);
 print(":");
 print(now.second(),10);
 print_crlf();
-delay(3000);
+delay(3000); //only for testing
 }

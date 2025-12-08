@@ -65,6 +65,7 @@ void loop(void) {
         else
           updateLCDAndLog();
         }
+        
     break;
 
     case RUNNING:
@@ -91,7 +92,7 @@ void CheckifProgramIsOnOrOff(void) {
   if (StartStopButtonEvent) {
     // Reset StartStopButtonEvent and previousTime back to zero
     StartStopButtonEvent = 0;
-    previousTime = 0;
+    startStopPreviousTime = 0;
 
     // Check current system state
     switch (ProgramStatus) {
@@ -109,38 +110,6 @@ void CheckifProgramIsOnOrOff(void) {
         ErrorCode = NONE;
         println("Program off!");
         break;
-    }
-  }
-}
-
-// Debounced read for Reset button
-void readResetButton(void) {
-  // Professor said millis() isn't ideal here, so use micros()
-  currentTime = micros();
-
-  // Direct hardware read from the reset button
-  reading = ((*my_PINC & (1 << 1)) ? HIGH : LOW);
-
-  // If this button's state is not the same as the last one
-  // store the time and update lastReading (used for debouncing)
-  if (reading != lastReading) {
-    previousTime = currentTime;
-    lastReading = reading;
-  }
-
-  // If enough time has passed and the reading is stable
-  if ((currentTime - previousTime) >= RESET_DEBOUNCE_US && reading != stableState) {
-    stableState = reading;
-
-    if (stableState == LOW) {
-
-      // Reset Button is pressed: TODO implement reset logic.
-      if (ProgramStatus == ERROR) {
-      }
-
-      if (ProgramStatus == IDLE) {
-        //Turn off the program
-      }
     }
   }
 }
