@@ -11,7 +11,7 @@
 
 
 static unsigned long startStopPreviousTime = 0;
-extern unsigned long currentTime;
+static unsigned long currentButtonTime =0;
 static unsigned long resetPreviousTime = 0;
 
 //vars for the last reading of startstopbutton
