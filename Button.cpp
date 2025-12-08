@@ -1,5 +1,17 @@
 #include "Button.h"
 
+volatile unsigned long startStopPreviousTime = 0;
+volatile unsigned long currentButtonTime    = 0;
+volatile unsigned long resetPreviousTime    = 0;
+
+volatile int lastReading  = HIGH;
+volatile int stableState  = HIGH;
+volatile int reading      = HIGH;
+
+volatile bool StartStopButtonEvent = false;
+
+
+
 volatile unsigned char* my_DDRE = (unsigned char*)0x2D;   // DDR for Port E interupt pin, pin 2, aka for the starting stoping the progran
 volatile unsigned char* my_PORTE = (unsigned char*)0x2E;  // PORT for Port E
 
