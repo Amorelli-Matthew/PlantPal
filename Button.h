@@ -9,10 +9,10 @@
 #define STARTSTOP_DEBOUNCE_US 3000000  //17 sec debounce time
 #define RESET_DEBOUNCE_US 50000UL      // 50 ms debounce time
 
-
-static unsigned long startStopPreviousTime = 0;
-static unsigned long currentButtonTime =0;
-static unsigned long resetPreviousTime = 0;
+//to keep track of time
+static volatile unsigned long startStopPreviousTime = 0;
+static volatile unsigned long currentButtonTime =0;
+static volatile unsigned long resetPreviousTime = 0;
 
 //vars for the last reading of startstopbutton
 static int lastReading = HIGH;
