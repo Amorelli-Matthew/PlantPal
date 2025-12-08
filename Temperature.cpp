@@ -1,11 +1,4 @@
 #include "Temperature.h"
-//defines the actual dht object
-dht DHT;
-
-int temperature = 0;
-int humidity = 0;
-
-unsigned long lastTempCheckTime = 0;
 
 int ReadTempature() {
 
@@ -30,7 +23,7 @@ int ReadTempature() {
   return DHTLIB_OK;
 }
 
-void TempandHumanitySensorCheck() {
+bool TempandHumanitySensorCheck() {
 
   int status = ReadTempature();
 
@@ -42,20 +35,12 @@ void TempandHumanitySensorCheck() {
     if (tempInvalid || humidityInvalid) {
       ProgramStatus = ERROR;
       ErrorCode = ERR_DHT_SENSOR_FAULT;
+
+      return false;
     }
   }
+
+  return true;
 }
 
 
-void printTempandHumanity(int soil, int temp, int humanity) {
-  //create new temp strings to hold lines one and two
-  char line1[17];
-  char line2[17];
-
-  //format lines 1 and 2 and then add them to each line string
-  sprintf(line1, "Soil:%d%%", soil);
-
-  sprintf(line2, "T:%dC H:%d%%", temp, humanity);
-
-  //display the result via lcd
-}

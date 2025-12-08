@@ -7,18 +7,6 @@ volatile unsigned char* my_PINC = (volatile unsigned char*)0x26;  //for pin 36 a
 volatile unsigned char* my_DDRC = (volatile unsigned char*)0x27;
 volatile unsigned char* my_PORTC = (volatile unsigned char*)0x28;
 
-unsigned long previousTime = 0;
-
-volatile bool StartStopButtonEvent;
-
-//vars for the last reading
-int lastReading = HIGH;
-int stableState = HIGH;
-int reading;
-
-
-
-
 void StartStopButtonInit() {
   //for the starting and stopping the system basically does pinMode(StartStopButton, INPUT_PULLUP);
 
@@ -48,4 +36,6 @@ void StartStopISR() {
     StartStopButtonEvent = !StartStopButtonEvent;
   }
 }
+
+
 

@@ -9,16 +9,15 @@
 //grab the dht.h lib from 
 //https://www.circuitbasics.com/how-to-set-up-the-dht11-humidity-sensor-on-an-arduino/
 
-extern dht DHT;
-extern int temperature;
-extern int humidity;
+static dht DHT;
+static int temperature = 0;
+static int humidity = 0;
 
 //store the last tempatures checked time
-extern unsigned long lastTempCheckTime;
+static unsigned long lastTempCheckTime = 0;
 extern unsigned long currentTime;
 
 int ReadTempature();
-void printTempandHumanity(int s, int t, int d);
-void TempandHumanitySensorCheck();
+bool TempandHumanitySensorCheck();
 
 #endif

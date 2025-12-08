@@ -9,20 +9,17 @@
 #define STARTSTOP_DEBOUNCE_US 3000000  //17 sec debounce time
 #define RESET_DEBOUNCE_US 50000UL      // 50 ms debounce time
 
-///we declare the variables first, Then init them in the resective cpp file
-// the extern then variable decloration tells the compiler that these variables are used in another file
-//the cpp file.
 
-extern unsigned long previousTime;
+static unsigned long previousTime = 0;
 extern unsigned long currentTime;
 
 //vars for the last reading of startstopbutton
-extern int lastReading;
-extern int stableState;
-extern int reading;
+static int lastReading = HIGH;
+static int stableState = HIGH;
+static int reading;
 
 //bool to keep track of when the button was pressed
-extern volatile bool StartStopButtonEvent;
+static volatile bool StartStopButtonEvent;
 
 extern volatile unsigned char* my_DDRE;   // DDR for Port E for starting stopping program button, this is for pin 2
 extern volatile unsigned char* my_PORTE;  // PORT for Port E.

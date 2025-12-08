@@ -6,10 +6,6 @@ volatile unsigned char *my_ADCSRB = (unsigned char *)0x007B;
 volatile unsigned char *my_ADCSRA = (unsigned char *)0x007A;
 volatile unsigned int *my_ADC_DATA = (unsigned int *)0x0078;  // ADCL/ADCH (right-adjusted)
 
- unsigned int WaterSensorValue = 0;
-
-// Use a separate timing variable so we don't interfere with button debounce
-static unsigned long lastWaterCheckTime = 0;
 
 void adc_init(void) {
   // ADCSRA: enable ADC, prescaler=128 for 16 MHz -> 125 kHz ADC clock
@@ -57,7 +53,7 @@ int ReadWaterSensor() {
 }
 
 // Method that checks how high the water is
-void waterlevelcheck(void) {
+bool waterlevelcheck(void) {
 
   // Get the current time
   currentTime = millis();
@@ -67,6 +63,7 @@ void waterlevelcheck(void) {
     lastWaterCheckTime = currentTime;
 
     // Assume WaterSensorValue is updated elsewhere (ADC / ISR / WaterSensor module)
+    //using custom printin via serial.h file
     if (WaterSensorValue > HIGH_LEVEL) {
       print("Water Level: High at ");
       println(WaterSensorValue);
@@ -81,6 +78,12 @@ void waterlevelcheck(void) {
       ErrorCode = ERR_LOW_WATER;
       print("Water Level: Low at ");
       println(WaterSensorValue);
+
+      //return that the water level is low and that the program cannot continue
+      return false;  
     }
+   
+  //return that the water level check was an sucesses 
+  return true;
   }
 }

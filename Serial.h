@@ -1,5 +1,8 @@
 #ifndef SERIAL_H
 #define SERIAL_H
+#include <stdint.h>
+//printing through uart via serial
+//used method overloading as a nice way to print without worring about what data type is used
 
 //UART bit masks
 #define RDA 0x80  // RXC0: Receive Data Available
@@ -24,6 +27,8 @@ void print(const char *s);
 void print(unsigned int v);
 void print_crlf(void);
 
+void print(uint16_t value, uint8_t base);
+void print(uint8_t value, uint8_t base);
 //print line versions
 //bascially add in the crlf
 void println(const char *s);

@@ -10,7 +10,6 @@ enum Status {
 
 enum ErrorCodes {
   NONE = 0,
-
   //1xx: Sensor & Data Errors
   ERR_SOIL_ADC_RANGE = 101,
   ERR_SOIL_ADC_SATURATED = 102,
@@ -34,7 +33,6 @@ enum ErrorCodes {
 };
 
 
-extern Status ProgramStatus;
-extern ErrorCodes ErrorCode;
-
+static Status ProgramStatus = DISABLED;
+static ErrorCodes ErrorCode = NONE;
 #endif

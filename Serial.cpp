@@ -141,3 +141,55 @@ void println(double value, unsigned int decimals) {
   // New line
   print_crlf();
 }
+
+void print(uint16_t value, uint8_t base) {
+  char buf[17]; // Enough for 16-bit binary plus '\0'
+  int i = 0;
+
+  if (value == 0) {
+    U0putchar('0');
+    return;
+  }
+
+  while (value > 0 && i < 16) {
+    uint8_t digit = value % base;
+    if (digit < 10) {
+      buf[i++] = '0' + digit;
+    } else {
+      buf[i++] = 'A' + (digit - 10); // HEX A-F
+    }
+    value /= base;
+  }
+
+  while (i--) {
+    U0putchar(buf[i]); // reverse print
+  }
+}
+
+
+void print(uint8_t value, uint8_t base) {
+  char buf[9]; // Enough for 8-bit binary
+  int i = 0;
+
+  if (value == 0) {
+    U0putchar('0');
+    return;
+  }
+
+  while (value > 0 && i < 8) {
+    uint8_t digit = value % base;
+    if (digit < 10) {
+      buf[i++] = '0' + digit;
+    } else {
+      buf[i++] = 'A' + (digit - 10);
+    }
+    value /= base;
+  }
+
+  while (i--) {
+    U0putchar(buf[i]);
+  }
+}
+
+
+

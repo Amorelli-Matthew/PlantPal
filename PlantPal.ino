@@ -4,15 +4,16 @@
 #include "Logging.h"
 #include "Temperature.h"
 #include "StatusCodes.h"
-Status ProgramStatus = DISABLED;
-ErrorCodes ErrorCode = NONE;
-
+#include "SoilSensor.h"
 unsigned long currentTime = 0;
 
 //prototypes
 void CheckifProgramIsOnOrOff(void);
 void readResetButton(void);
 void ledStatus(void);
+void updateLCDAndLog(void);
+void ErrorHanlding(ErrorCodes &ErrorCode);
+
 
 void setup(void) {
   // Initialize in this order:
@@ -24,48 +25,61 @@ void setup(void) {
 
   U0init(9600);
 
-  // LCD init goes here
   StartStopButtonInit();
   ResetButtonInit();
   adc_init();
-  // TODO: Logging init
-
-  ProgramStatus = DISABLED;
+  initLogging();
+  //put soil sensors init here
+  ProgramStatus = IDLE;  //put as DISABLED in final Program
   ErrorCode = NONE;
 }
 
+unsigned long MainspreviousTime = 0;
 void loop(void) {
   CheckifProgramIsOnOrOff();  // Handle Start/Stop button flag
 
   readResetButton();  // Handle Reset button
 
- // Reflect state on LEDs
+  // Reflect state on LEDs
   ledStatus();
 
   switch (ProgramStatus) {
     case DISABLED:
-      //track if pumps off, if not then turn water pumpoff
       //sensors off
       //print to lcd: system disabled
-      
       break;
-    case IDLE:
-      waterlevelcheck();
-      TempandHumanitySensorCheck();
-      // Later: soil moisture check & pump control can be added here
 
-      break;
+    case IDLE:
+
+      //check for every minute
+      if ((currentTime - MainspreviousTime) >= 60000) {
+        MainspreviousTime = currentTime;
+
+       //waterlevelcheck();
+        //TempandHumanitySensorCheck();
+
+        // Later: soil moisture check & pump control can be added here
+        if (isSoilDry())
+          //if all of the sensors report correct readings then change program status to running
+          ProgramStatus = RUNNING;
+        else
+          updateLCDAndLog();
+        }
+    break;
 
     case RUNNING:
       //run water and other logic
-      waterlevelcheck();
+      //  simple methods for pumping water from waterpump
+      //water for 3 to 5 seconds at a time untill thw water pump is good
+
       break;
 
     case ERROR:
       //for error handling
       //check what error message it is
       //print error message
-      //force pump off
+      //force pump off/all other sensors
+      ErrorHanlding(ErrorCode);
       break;
   }
 }
@@ -149,6 +163,79 @@ void ledStatus(void) {
 
     case ERROR:
       // Red LED on, others off
+      break;
+  }
+}
+
+void updateLCDAndLog() {
+  RTCTest();
+}
+
+void ErrorHanlding(ErrorCodes &ErrorCode) {
+  switch (ErrorCode) {
+      //make them print to lcd screen now
+    case NONE:
+      println("OK: No active error");
+      break;
+
+    // 1xx: Sensor & Data Errors
+    case ERR_SOIL_ADC_RANGE:
+      println("101: Soil ADC out of expected range");
+      break;
+
+    case ERR_SOIL_ADC_SATURATED:
+      println("102: Soil ADC saturated");
+      break;
+
+    case ERR_DHT_TIMEOUT:
+      println("111: DHT sensor timed out");
+      break;
+
+    case ERR_DHT_SENSOR_FAULT:
+      println("112: DHT sensor hardware fault");
+      break;
+
+    // 2xx: Pump / Motor Errors
+    case ERR_PUMP_TIMEOUT:
+      println("201: Pump timeout");
+      break;
+
+    case ERR_PUMP_NO_CURRENT:
+      println("202: Pump no current draw");
+      break;
+
+    case ERR_PUMP_OVERCURRENT:
+      println("203: Pump overcurrent!");
+      break;
+
+    // 3xx: Environmental Condition Errors
+    case ERR_LOW_WATER:
+      println("301: Low water level");
+      break;
+
+    case ERR_SOIL_NOT_RECOVERING:
+      println("302: Soil moisture not improving");
+      break;
+
+    // 4xx: System / Logic Errors
+    case ERR_RTC_FAILURE:
+      println("401: RTC communication failure");
+      break;
+
+    case ERR_INIT_FAILURE:
+      println("402: System initialization failed");
+      break;
+
+    case ERR_UNEXPECTED_STATE:
+      println("403: Unexpected state detected");
+      break;
+
+    case ERR_UNEXPECTED_RESTART:
+      println("404: Unexpected restart");
+      break;
+
+    default:
+      println("Unknown error code!");
       break;
   }
 }
