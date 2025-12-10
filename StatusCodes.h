@@ -33,6 +33,6 @@ enum ErrorCodes {
 };
 
 
-static Status ProgramStatus = DISABLED;
-static ErrorCodes ErrorCode = NONE;
+extern Status ProgramStatus;
+extern ErrorCodes ErrorCode;
 #endif

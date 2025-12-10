@@ -1,6 +1,5 @@
 #ifndef LOGGING_H
 #define LOGGING_H
-
 #include "Serial.h"
 
 //install lib first on system by searching

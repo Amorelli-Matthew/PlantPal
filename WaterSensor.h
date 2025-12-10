@@ -27,5 +27,6 @@ extern unsigned long currentTime;
 //methods to initilize water sensor and read the sensor
 void adc_init(void);
 unsigned int adc_read(unsigned char adc_channel);
+int ReadWaterSensor(void);
 bool waterlevelcheck(void);
 #endif

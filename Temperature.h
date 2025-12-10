@@ -10,8 +10,8 @@
 //https://www.circuitbasics.com/how-to-set-up-the-dht11-humidity-sensor-on-an-arduino/
 
 static dht DHT;
-static int temperature = 0;
-static int humidity = 0;
+static float temperature = 0;
+static float humidity = 0;
 
 //store the last tempatures checked time
 static unsigned long lastTempCheckTime = 0;

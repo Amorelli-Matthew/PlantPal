@@ -11,9 +11,9 @@ int ReadTempature() {
     int chk = DHT.read11(DHT11_PIN);
 
     if (chk == DHTLIB_OK) {
-      // store the temp and humidity as ints
-      temperature = (int)round(DHT.temperature);
-      humidity    = (int)round(DHT.humidity);
+      // store the temp and humidity
+      temperature = round(DHT.temperature);
+      humidity    = round(DHT.humidity);
     }
 
     return chk;   // caller decides what to do with error/success
@@ -29,8 +29,11 @@ bool TempandHumanitySensorCheck() {
 
   if (status != DHTLIB_OK) {
 
-    bool tempInvalid = (temperature < 0 || temperature > 50);
-    bool humidityInvalid = (humidity < 20 || humidity > 90);
+    int tempIntTemp =(int) temperature;
+    int TempIntHum = (int) humidity;
+
+    bool tempInvalid = (tempIntTemp < 0 || tempIntTemp > 50);
+    bool humidityInvalid = (TempIntHum < 20 || TempIntHum > 90);
 
     if (tempInvalid || humidityInvalid) {
       ProgramStatus = ERROR;

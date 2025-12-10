@@ -54,7 +54,6 @@ int ReadWaterSensor() {
 
 // Method that checks how high the water is
 bool waterlevelcheck(void) {
-
   // Get the current time
   currentTime = millis();
 
@@ -62,6 +61,7 @@ bool waterlevelcheck(void) {
   if ((currentTime - lastWaterCheckTime) >= 3000UL) {
     lastWaterCheckTime = currentTime;
 
+    WaterSensorValue = ReadWaterSensor();
     // Assume WaterSensorValue is updated elsewhere (ADC / ISR / WaterSensor module)
     //using custom printin via serial.h file
     if (WaterSensorValue > HIGH_LEVEL) {
@@ -82,8 +82,8 @@ bool waterlevelcheck(void) {
       //return that the water level is low and that the program cannot continue
       return false;  
     }
-   
-  //return that the water level check was an sucesses 
-  return true;
   }
+
+    //return that the water level check was an sucesses 
+  return true;
 }

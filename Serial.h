@@ -29,8 +29,9 @@ void print_crlf(void);
 
 void print(uint16_t value, uint8_t base);
 void print(uint8_t value, uint8_t base);
+
 //print line versions
-//bascially add in the crlf
+//bascially adds in the crlf
 void println(const char *s);
 void println(unsigned int v);
 void println(double value, unsigned int decimals);
