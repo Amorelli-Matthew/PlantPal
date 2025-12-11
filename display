@@ -1,0 +1,204 @@
+//Jason Kimoto, Matthew Amorelli
+
+#include <LiquidCrystal.h>
+#include <Keypad.h>
+
+int cursorRow = 0;
+int cursorColumn = 0;
+
+const int ROW_NUM = 4; //four rows
+const int COLUMN_NUM = 4; //four columns
+
+char keys[ROW_NUM][COLUMN_NUM] = {
+  {'1','2','3', 'A'},
+  {'4','5','6', 'B'},
+  {'7','8','9', 'C'},
+  {'*','0','#', 'D'}
+};
+
+byte pin_rows[ROW_NUM] = {22, 23, 24, 25}; //connect to the row pinouts of the keypad
+byte pin_column[COLUMN_NUM] = {26, 27, 28, 29}; //connect to the column pinouts of the keypad
+
+Keypad keypad = Keypad( makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM );
+
+// LCD pins <--> Arduino pins
+const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
+int right=0,up=0;
+int dir1=0,dir2=0;
+byte customChar[8] = {
+  0b00000,
+  0b01010,
+  0b11111,
+  0b11111,
+  0b01110,
+  0b00100,
+  0b00000,
+  0b00000
+};
+
+byte customChar2[8] = {
+  0b00000,
+  0b00000,
+  0b01110,
+  0b01110,
+  0b01110,
+  0b00000,
+  0b00000,
+  0b00000
+};
+LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
+
+void setup()
+
+{
+  Serial.begin(9600);
+  lcd.begin(16, 2); // set up number of columns and rows
+
+  lcd.createChar(1, customChar); // create a new custom character
+
+  lcd.setCursor(0, 0); // move cursor to (2, 0)
+  lcd.write((byte)1);  // print the custom char at (2, 0)
+  
+  lcd.createChar(2, customChar2); // create a new custom character
+  lcd.setCursor(5, 1); // move cursor to (2, 0)
+  lcd.write((byte)2);  // print the custom char at (2, 0)
+
+    lcd.setCursor(9, 1); // move cursor to (2, 0)
+  lcd.write((byte)2);  // print the custom char at (2, 0)
+
+    lcd.setCursor(6, 0); // move cursor to (2, 0)
+  lcd.write((byte)2);  // print the custom char at (2, 0)
+    lcd.setCursor(15, 1); // move cursor to (2, 0)
+  lcd.write((byte)2);  // print the custom char at (2, 0)
+
+  //lcd.setCursor(0,0);
+
+}
+
+void loop()
+{
+
+
+  char key = keypad.getKey();
+
+/*
+  if (key) {
+    Serial.println(key);
+    Serial.println(cursorRow);
+    Serial.println(cursorColumn);
+
+    if (key == '2') {
+        Serial.println("Case Entered");
+            Serial.println(cursorRow);
+            Serial.println(cursorColumn);
+        lcd.setCursor(cursorRow,cursorColumn);
+        lcd.print(' ');
+        cursorRow + 1;
+        if (cursorRow > 1) {
+          cursorRow = 0;
+        }
+        lcd.setCursor(cursorRow, cursorColumn);
+        lcd.write((byte)1);
+    }
+
+  }
+
+*/
+
+static int heartX=0,heartY=0;
+static int squareAX = 6, squareAY = 0;
+static int squareBX = 5, squareBY = 1;
+static int squareCX = 9, squareCY = 1;
+static int squareDX = 15, squareDY = 1;
+
+if(key)
+{
+  lcd.clear();
+switch(key)
+{
+  case '4': heartX--;
+    break;
+      
+      case '6': heartX++;
+    break;
+
+      case '8': heartY--;
+    break;
+
+      case '2': heartY++;
+    break;
+}
+  if(heartX <0)
+    heartX = 15;
+
+  if(heartX >15)
+      heartX = 0;
+
+
+  if(heartY <0)
+    heartY = 1;
+
+  if(heartY > 1)
+      heartY = 0;
+  lcd.clear();
+
+
+  
+  lcd.setCursor(squareAX,squareAY);
+  lcd.write((byte)2);
+
+  lcd.setCursor(squareBX,squareBY);
+  lcd.write((byte)2);
+
+  lcd.setCursor(squareCX,squareCY);
+  lcd.write((byte)2);
+
+  lcd.setCursor(squareDX,squareDY);
+  lcd.write((byte)2);
+
+  lcd.setCursor(heartX,heartY);
+  lcd.write((byte)1);
+
+  if( heartX == squareAX && heartY== squareAY )
+  {
+    Serial.println("You scored!!");
+    squareAX = 16;
+    squareAY = 16;
+  }
+
+  if( heartX == squareBX && heartY== squareBY )
+  {
+    Serial.println("You scored!!");
+    squareBX = 16;
+    squareBY = 16;
+  }
+
+  if( heartX == squareCX && heartY== squareCY )
+  {
+    Serial.println("You scored!!");
+    squareCX = 16;
+    squareCY = 16;
+  }
+
+  if( heartX == squareDX && heartY== squareDY )
+  {
+    Serial.println("You scored!!");
+    squareDX = 16;
+    squareDY = 16;
+  }
+
+
+}
+}
+
+
+  
+
+   
+
+    
+
+      
+
+//}
+
