@@ -10,6 +10,8 @@ Status ProgramStatus = DISABLED;
 ErrorCodes ErrorCode = NONE;
 unsigned long currentTime = 0;
 
+static char timestamp[30];
+
 //prototypes
 void CheckifProgramIsOnOrOff(void);
 void readResetButton(void);
@@ -29,6 +31,7 @@ void setup(void) {
 
   StartStopButtonInit();
   ResetButtonInit();
+
   adc_init();
   initLogging();
   //put soil sensors init here
@@ -38,13 +41,13 @@ void setup(void) {
 
 unsigned long MainspreviousTime = 0;
 void loop(void) {
-  CheckifProgramIsOnOrOff();  // Handle Start/Stop button flag
+ // CheckifProgramIsOnOrOff();  // Handle Start/Stop button flag
 
-  readResetButton();  // Handle Reset button
+// readResetButton();  // Handle Reset button
 
   // Reflect state on LEDs
-  ledStatus();
-
+//  ledStatus();
+/*
   switch (ProgramStatus) {
     case DISABLED:
       //sensors off
@@ -70,15 +73,19 @@ void loop(void) {
       if ((currentTime - MainspreviousTime) >= 60000) {
         MainspreviousTime = currentTime;
 
-        waterlevelcheck();
-        TempandHumanitySensorCheck();
-
+       if(waterlevelcheck() && TempandHumanitySensorCheck())
+        {
         // Later: soil moisture check & pump control can be added here
         if (false)  // if (isSoilDry()) uncommit once method is written
           //if all of the sensors report correct readings then change program status to running
           ProgramStatus = RUNNING;
         else
-          updateLCDAndLog();
+          println("none");
+          
+         // Println(const String& status, float tempC, int soilPercent);
+
+        }
+
       }
      
 
@@ -102,7 +109,9 @@ void loop(void) {
       ErrorHandling(ErrorCode);
       break;
   }
-}
+*/}
+
+/*
 
 // Checks if Start/Stop button event occurred and toggles system state
 void CheckifProgramIsOnOrOff(void) {
@@ -112,13 +121,14 @@ void CheckifProgramIsOnOrOff(void) {
     // Reset StartStopButtonEvent and previousTime back to zero
     StartStopButtonEvent = 0;
     startStopPreviousTime = 0;
+  getTimeViaRTC(timestamp, sizeof(timestamp));
 
     // Check current system state
     switch (ProgramStatus) {
       case DISABLED:
         // Starts the program
-        ProgramStatus = IDLE;
-        println("Program on!");
+       // ProgramStatus = IDLE;
+        logEvent("Program on", timestamp);
         break;
 
       case IDLE:
@@ -127,12 +137,12 @@ void CheckifProgramIsOnOrOff(void) {
         // Turns off the program from any active state
         ProgramStatus = DISABLED;
         ErrorCode = NONE;
-        println("Program off!");
+        logEvent("Program off", timestamp);
         break;
     }
   }
 }
-
+*/
 
 // Display LED status based on current ProgramStatus
 void ledStatus(void) {
@@ -155,116 +165,95 @@ void ledStatus(void) {
   }
 }
 
-void updateLCDAndLog() {
-  //updateLCD(status,temperature,soilPercent);
-  //logMethod();
-  RTCTest();
-}
-
 void ErrorHandling(ErrorCodes &ErrorCode) {
+  // get the time in order to record the error
+  getTimeViaRTC(timestamp, sizeof(timestamp));
 
   switch (ErrorCode) {
     // 1xx: Sensor & Data Errors
     case ERR_SOIL_ADC_RANGE:
-      println("101: Soil ADC out of expected range");
       UpdateLCD("ERROR: Soil", "Sensor out of range");
-      logEvent("101: Soil ADC out of expected range: check wiring, then press RESET");
-      // User: fix wiring, then press reset to try to return to IDLE
+      logEvent("101: Soil ADC out of range; check wiring, press RESET", timestamp);
       break;
 
     case ERR_SOIL_ADC_SATURATED:
-      println("102: Soil ADC saturated");
       UpdateLCD("ERROR: Soil", "ADC saturated");
-      logEvent("102: Soil ADC saturated – sensor stuck at min/max");
-      // Pump already off; condition must clear before reset succeeds
+      logEvent("102: Soil ADC saturated; stuck at min/max", timestamp);
       break;
 
     case ERR_DHT_TIMEOUT:
-      println("111: DHT sensor timed out");
       UpdateLCD("ERROR: DHT", "Read timeout");
-      logEvent("111: DHT timeout – will retry periodically; press RESET after it recovers");
-      // Main loop in ERROR state can retry DHT read every minute
+      logEvent("111: DHT read timeout; will retry; press RESET after recover", timestamp);
       break;
 
     case ERR_DHT_SENSOR_FAULT:
-      println("112: DHT sensor hardware fault");
       UpdateLCD("ERROR: DHT", "Hardware fault");
-      logEvent("112: DHT hardware fault – check/replace sensor");
-      // Pump remains off until sensor is healthy and user resets
+      logEvent("112: DHT hardware fault; check or replace sensor", timestamp);
       break;
 
     // 2xx: Pump / Motor Errors
     case ERR_PUMP_TIMEOUT:
-      println("201: Pump timeout, check waterpump");
       UpdateLCD("ERROR: Pump", "Timeout/Low water?");
-      logEvent("201: Pump timeout – stopped to protect hardware; check pump & water level");
-      // Pump already forced off at top
+      logEvent("201: Pump timeout; check pump and water level", timestamp);
       break;
 
     case ERR_PUMP_NO_CURRENT:
-      println("202: Pump no current draw");
       UpdateLCD("ERROR: Pump", "No current draw");
-      logEvent("202: Pump no current – wiring or pump disconnected");
+      logEvent("202: Pump no current; wiring/pump may be disconnected", timestamp);
       break;
 
     case ERR_PUMP_OVERCURRENT:
-      println("203: Pump overcurrent!");
       UpdateLCD("ERROR: Pump", "Overcurrent!");
-      logEvent("203: Pump overcurrent – possible jam; pump turned OFF");
+      logEvent("203: Pump overcurrent; possible jam; pump turned OFF", timestamp);
       break;
 
     // 3xx: Environmental Condition Errors
     case ERR_LOW_WATER:
-      println("301: Low water level");
       UpdateLCD("ERROR: Low Water", "Refill reservoir");
-      logEvent("301: Low water – pump disabled until reservoir refilled and RESET pressed");
+      logEvent("301: Low water; pump disabled until refill and RESET", timestamp);
       break;
 
     case ERR_SOIL_NOT_RECOVERING:
-      println("302: Soil moisture not improving");
       UpdateLCD("ERROR: Soil", "Not improving");
-      logEvent("302: Soil not recovering – ask user to check plant/soil then press RESET");
-      // Suggest to user: Please press reset after fixing the issue
+      logEvent("302: Soil not recovering; check plant/soil, then RESET", timestamp);
       break;
 
     // 4xx: System / Logic Errors
     case ERR_RTC_FAILURE:
-      println("401: RTC communication failure");
       UpdateLCD("ERROR: RTC", "Comm failure");
-      logEvent("401: RTC failure – timestamps may be invalid; watering disabled");
+      logEvent("401: RTC failure; timestamps invalid; watering disabled", timestamp);
       break;
 
     case ERR_INIT_FAILURE:
-      println("402: System initialization failed");
       UpdateLCD("ERROR: System", "Init failed");
-      logEvent("402: Initialization failed – hardware problem at startup");
+      logEvent("402: Init failed; hardware or config problem", timestamp);
       break;
 
     case ERR_UNEXPECTED_STATE:
       UpdateLCD("ERROR: Logic", "Unexpected state");
-    logEvent("403: Unexpected state – logic bug, system locked in ERROR");
+      logEvent("403: Unexpected state; logic bug; system in ERROR", timestamp);
       break;
 
     case ERR_UNEXPECTED_RESTART:
       UpdateLCD("ERROR", "Unexpected restart");
-      logEvent("404: Unexpected restart – power loss or reset; user intervention required");
+      logEvent("404: Unexpected restart; power loss or reset", timestamp);
       break;
 
     default:
-      println("Unknown error code!");
       UpdateLCD("ERROR", "Unknown code");
+      logEvent("000: Unknown error code", timestamp);
       break;
   }
 }
-
 void pumpOff() {
   //method to turn pumpoff
   isPumpOn = false;
 }
 
 
-void logEvent(const char *msg) {
-  // Use your Logging.h + RTC:
-  // timestamp + msg over Serial and/or SD/EEPROM
-  // e.g., logWithTimestamp(msg);
+void logEvent(const char *msg,const char* timestamp) {
+    char buffer[200];  // enough for timestamp + message
+    snprintf(buffer, sizeof(buffer), "[%s] %s", timestamp, msg);
+
+    println(buffer);   // ALWAYS one line
 }

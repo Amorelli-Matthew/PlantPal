@@ -1,7 +1,7 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 #include "Serial.h"
-
+#include <string.h>
 //install lib first on system by searching
 #include <RTClib.h>
 
@@ -12,6 +12,5 @@ static const char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednes
 "Friday", "Saturday"};
 
 void initLogging();
-void RTCTest();
-
+void getTimeViaRTC(char *outBuffer, size_t bufferSize);
 #endif

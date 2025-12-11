@@ -1,86 +1,112 @@
 #include "Button.h"
 
-volatile unsigned long startStopPreviousTime = 0;
-volatile unsigned long currentButtonTime    = 0;
-volatile unsigned long resetPreviousTime    = 0;
+// -----------------------------------------------------------------------------
+// Globals
+// -----------------------------------------------------------------------------
+volatile unsigned char *my_DDRE  = (unsigned char *)0x2D;  // DDR for Port E (Start/Stop button, PE4 / pin 2)
+volatile unsigned char *my_PORTE = (unsigned char *)0x2E;  // PORT for Port E
 
-volatile int lastReading  = HIGH;
-volatile int stableState  = HIGH;
-volatile int reading      = HIGH;
-
-volatile bool StartStopButtonEvent = false;
-
-volatile unsigned char* my_DDRE = (unsigned char*)0x2D;   // DDR for Port E interupt pin, pin 2, aka for the starting stoping the progran
-volatile unsigned char* my_PORTE = (unsigned char*)0x2E;  // PORT for Port E
-
-volatile unsigned char* my_PINC = (volatile unsigned char*)0x26;  //for pin 36 aka the rest pin
-volatile unsigned char* my_DDRC = (volatile unsigned char*)0x27;
+volatile unsigned char* my_PINC  = (volatile unsigned char*)0x26; // Port C input (reset button, PC1 / pin 36)
+volatile unsigned char* my_DDRC  = (volatile unsigned char*)0x27;
 volatile unsigned char* my_PORTC = (volatile unsigned char*)0x28;
 
-void StartStopButtonInit() {
-  //for the starting and stopping the system basically does pinMode(StartStopButton, INPUT_PULLUP);
+// true  = program running
+// false = program stopped
+//volatile bool ProgramStatus        = false;
+// set by ISR when a valid press is detected, cleared in main loop
+volatile bool StartStopButtonEvent = false;
 
-  *my_DDRE &= ~(1 << 4);
-  *my_PORTE |= (1 << 4);  //enables pull up
+// separate timing for Start/Stop debounce (don’t share with reset button)
+static volatile unsigned long startStopLastInterruptUs = 0;
 
-  //attach the interupt
+int lastReading;
+int stableState;
+int reading;
+// -----------------------------------------------------------------------------
+// Start/Stop button
+// -----------------------------------------------------------------------------
+void StartStopButtonInit()
+{
+  // Equivalent to pinMode(StartStopButtonPin, INPUT_PULLUP)
+  *my_DDRE  &= ~(1 << 4);  // PE4 as input
+  *my_PORTE |=  (1 << 4);  // enable pull-up on PE4
+
   attachInterrupt(digitalPinToInterrupt(StartStopButtonPin), StartStopISR, FALLING);
 }
 
-//init reset button
-void ResetButtonInit() {
-  // Configure pin 36 as input with pull-up like using pinMode
-  *my_DDRC &= ~(1 << 1);  // input
-  *my_PORTC |= (1 << 1);  // enable pull-up
-}
+// Called regularly from loop() to apply the effect of a press
+void CheckifProgramIsOnOrOff()
+{
+  // Only act once per button press detected by ISR
+  if (!StartStopButtonEvent) {
+    return;
+  }
 
+  // consume the event
+  StartStopButtonEvent = false;
 
-void StartStopISR() {
-  //get the current time
-  currentButtonTime = micros();
+  // toggle program status
+ // ProgramStatus = !ProgramStatus;
 
-  //check the difference in time and see if its been after 10 microseconds
-  //if so, store the current time into the previous time variable and then invert the startStopButton button events state.
-  if ((currentButtonTime - startStopPreviousTime) >= (STARTSTOP_DEBOUNCE_US)) {
-    startStopPreviousTime = currentButtonTime;
-    StartStopButtonEvent = !StartStopButtonEvent;
+  if (ProgramStatus == DISABLED) {
+    // Program just turned ON
+  println("Program ON");
+  ProgramStatus = IDLE;
+
+  } 
+  //if the program is in IDLE, running or Error
+  else {
+    // Program just turned OFF
+  println("Program OFF");
+  ProgramStatus = DISABLED;
   }
 }
 
+// ISR: runs on falling edge of Start/Stop button
+void StartStopISR()
+{
+  unsigned long now = micros();
 
-// method for reset button
-void readResetButton(void) {
-  // Professor said millis() isn't ideal here, so use micros()
-  currentButtonTime = micros();
+  // Debounce: ignore edges that occur too soon after the last one
+  if ((now - startStopLastInterruptUs) < STARTSTOP_DEBOUNCE_US) {
+    return;
+  }
 
-  // Direct hardware read from the reset button
-  reading = ((*my_PINC & (1 << 1)) ? HIGH : LOW);
+  startStopLastInterruptUs = now;
+  StartStopButtonEvent     = true;  // signal main loop that a valid press occurred
+}
 
-  // If this button's state is not the same as the last one
-  // store the time and update lastReading (used for debouncing)
+// -----------------------------------------------------------------------------
+// Reset button (unchanged logic, just shown for completeness)
+// -----------------------------------------------------------------------------
+void ResetButtonInit()
+{
+  // Configure pin 36 (PC1) as input with pull-up
+  *my_DDRC  &= ~(1 << PC1_BIT);  // input
+  *my_PORTC |=  (1 << PC1_BIT);  // enable pull-up
+}
+
+/*
+void readResetButton()
+{
+  btncurrentTime = micros();
+
+  // Direct hardware read — no digitalRead()
+  reading = ((*my_PINC & (1 << PC1_BIT)) ? HIGH : LOW);
+
+  // Debounce
   if (reading != lastReading) {
-    resetPreviousTime = currentButtonTime;
-    lastReading = reading;
+    btnpreviousTime = btncurrentTime;
+    lastReading     = reading;
   }
 
-  // If enough time has passed and the reading is stable
-  if ((currentButtonTime - resetPreviousTime) >= RESET_DEBOUNCE_US && reading != stableState) {
+  if ((btncurrentTime - btnpreviousTime) >= RESET_DEBOUNCE_US && reading != stableState) {
     stableState = reading;
 
     if (stableState == LOW) {
-
-      // Reset Button is pressed: TODO implement reset logic.
-      if (ProgramStatus == ERROR) {
-      }
-
-      if (ProgramStatus == IDLE) {
-        //Turn off the program
-       ProgramStatus = DISABLED;
-      }
+     println("Button Pressed");
+     // uart_print_crlf();
     }
   }
 }
-
-
-
-
+*/

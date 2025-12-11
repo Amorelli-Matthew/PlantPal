@@ -42,7 +42,7 @@ bool TempandHumanitySensorCheck() {
       return false;
     }
   }
-
+    //temp is great
   return true;
 }
 
