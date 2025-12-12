@@ -39,15 +39,35 @@ void setup(void) {
 
   U0init(9600);
   
-  // Initialize LCD
+  // Initialize LCD with proper delays
+  // LCD needs time to power up and stabilize
+  delay(100);  // Wait for power stabilization
+  
+  // Run wiring diagnostic first (prints to serial)
+  checkLCDWiring();
+  
   lcd.begin(16, 2);
-  delay(100);  // Give LCD time to initialize
+  delay(200);  // Give LCD time to initialize after begin()
+  
+  // Clear and set display properties
+  lcd.clear();
+  lcd.display();  // Ensure display is on
+  lcd.noCursor();  // Turn off cursor
+  lcd.noBlink();   // Turn off blink
+  delay(50);
+  
+  // Run LCD test pattern - helps diagnose contrast issues
+  // Adjust contrast pot while this runs to see text appear
+  testLCD();
+  
+  // Show startup message
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("PlantPal v1.0");
+  delay(100);
   lcd.setCursor(0, 1);
   lcd.print("Initializing...");
-  delay(500);  // Show initial message briefly
+  delay(1000);  // Show initial message longer
   
   // Initialize LEDs
   LEDInit();

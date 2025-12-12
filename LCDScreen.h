@@ -15,4 +15,11 @@ void updateLCD(const String& status, float tempC, int soilPercent);
 void UpdateLCD(const char *line1);
 void UpdateLCD(const char *line1, const char *line2);
 
+// Test function to diagnose LCD issues
+void testLCD(void);
+
+// Diagnostic function to check wiring
+// Returns true if LCD appears to be responding, false otherwise
+bool checkLCDWiring(void);
+
 #endif
