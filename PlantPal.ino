@@ -19,10 +19,10 @@ static char timestamp[30];
 unsigned long MainspreviousTime = 0;
 unsigned long lastLCDUpdateTime = 0;
 const unsigned long SENSOR_DISPLAY_INTERVAL_MS = 60000UL;  // 1 minute
+static Status lastDisplayedState = DISABLED;  // Track last displayed state
 
 //prototypes
 void CheckifProgramIsOnOrOff(void);
-void readResetButton(void);
 void ErrorHandling(ErrorCodes &ErrorCode);
 void pumpOff(void);
 void logEvent(const char *msg, const char* timestamp);
@@ -41,6 +41,13 @@ void setup(void) {
   
   // Initialize LCD
   lcd.begin(16, 2);
+  delay(100);  // Give LCD time to initialize
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("PlantPal v1.0");
+  lcd.setCursor(0, 1);
+  lcd.print("Initializing...");
+  delay(500);  // Show initial message briefly
   
   // Initialize LEDs
   LEDInit();
@@ -50,7 +57,6 @@ void setup(void) {
   
   // Initialize Buttons
   StartStopButtonInit();
-  ResetButtonInit();
 
   // Initialize ADC for sensors
   adc_init();
@@ -61,6 +67,10 @@ void setup(void) {
   // Start in DISABLED state
   ProgramStatus = DISABLED;
   ErrorCode = NONE;
+  lastDisplayedState = DISABLED;
+  
+  // Display initial state on LCD
+  UpdateLCD("System Disabled");
   
   // Log startup
   getTimeViaRTC(timestamp, sizeof(timestamp));
@@ -72,9 +82,6 @@ void loop(void) {
   
   // Handle Start/Stop button flag
   CheckifProgramIsOnOrOff();
-  
-  // Handle Reset button
-  readResetButton();
   
   // Control LEDs based on state
   LEDControl(ProgramStatus);
@@ -93,8 +100,11 @@ void loop(void) {
         pumpOff();
       }
       
-      // Display disabled message on LCD
-      UpdateLCD("System Disabled");
+      // Display disabled message on LCD (only update if state changed)
+      if (lastDisplayedState != DISABLED) {
+        UpdateLCD("System Disabled");
+        lastDisplayedState = DISABLED;
+      }
       break;
 
     case IDLE:
@@ -218,7 +228,7 @@ void ErrorHandling(ErrorCodes &ErrorCode) {
     // 1xx: Sensor & Data Errors
     case ERR_SOIL_ADC_RANGE:
       UpdateLCD("ERROR: Soil", "Sensor out of range");
-      logEvent("101: Soil ADC out of range; check wiring, press RESET", timestamp);
+      logEvent("101: Soil ADC out of range; check wiring", timestamp);
       break;
 
     case ERR_SOIL_ADC_SATURATED:
@@ -228,7 +238,7 @@ void ErrorHandling(ErrorCodes &ErrorCode) {
 
     case ERR_DHT_TIMEOUT:
       UpdateLCD("ERROR: DHT", "Read timeout");
-      logEvent("111: DHT read timeout; will retry; press RESET after recover", timestamp);
+      logEvent("111: DHT read timeout; will retry", timestamp);
       break;
 
     case ERR_DHT_SENSOR_FAULT:
@@ -255,12 +265,12 @@ void ErrorHandling(ErrorCodes &ErrorCode) {
     // 3xx: Environmental Condition Errors
     case ERR_LOW_WATER:
       UpdateLCD("ERROR: Low Water", "Refill reservoir");
-      logEvent("301: Low water; pump disabled until refill and RESET", timestamp);
+      logEvent("301: Low water; pump disabled until refill", timestamp);
       break;
 
     case ERR_SOIL_NOT_RECOVERING:
       UpdateLCD("ERROR: Soil", "Not improving");
-      logEvent("302: Soil not recovering; check plant/soil, then RESET", timestamp);
+      logEvent("302: Soil not recovering; check plant/soil", timestamp);
       break;
 
     // 4xx: System / Logic Errors
@@ -281,7 +291,7 @@ void ErrorHandling(ErrorCodes &ErrorCode) {
 
     case ERR_UNEXPECTED_RESTART:
       UpdateLCD("ERROR", "Unexpected restart");
-      logEvent("404: Unexpected restart; power loss or reset", timestamp);
+      logEvent("404: Unexpected restart; power loss", timestamp);
       break;
 
     default:

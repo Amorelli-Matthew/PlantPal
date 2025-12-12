@@ -1,6 +1,7 @@
 #ifndef STEPPERMOTOR_H
 #define STEPPERMOTOR_H
 
+#include <Arduino.h>
 #include "StatusCodes.h"
 
 // Stepper motor pins: 41, 43, 40, 42

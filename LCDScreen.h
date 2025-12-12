@@ -1,5 +1,6 @@
 #ifndef LCDSCREEN_H
 #define LCDSCREEN_H
+#include <Arduino.h>
 #include <LiquidCrystal.h>
 #include "StatusCodes.h"
 // LCD pins <--> Arduino pins
