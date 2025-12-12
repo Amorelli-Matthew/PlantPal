@@ -46,4 +46,12 @@ bool TempandHumanitySensorCheck() {
   return true;
 }
 
+float GetTemperature(void) {
+  return temperature;
+}
+
+float GetHumidity(void) {
+  return humidity;
+}
+
 

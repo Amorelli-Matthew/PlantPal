@@ -5,6 +5,9 @@
 #include "Temperature.h"
 #include "StatusCodes.h"
 #include "SoilSensor.h"
+#include "LEDControl.h"
+#include "StepperMotor.h"
+#include "LCDScreen.h"
 
 Status ProgramStatus = DISABLED;
 ErrorCodes ErrorCode = NONE;
@@ -12,155 +15,197 @@ unsigned long currentTime = 0;
 
 static char timestamp[30];
 
+// Timing variables
+unsigned long MainspreviousTime = 0;
+unsigned long lastLCDUpdateTime = 0;
+const unsigned long SENSOR_DISPLAY_INTERVAL_MS = 60000UL;  // 1 minute
+
 //prototypes
 void CheckifProgramIsOnOrOff(void);
 void readResetButton(void);
-void ledStatus(void);
-void updateLCDAndLog(void);
 void ErrorHandling(ErrorCodes &ErrorCode);
-
+void pumpOff(void);
+void logEvent(const char *msg, const char* timestamp);
 
 void setup(void) {
   // Initialize in this order:
   // 1) Serial operations
-  // 3) Buttons
-  // 4) Water sensor / ADC
-  // 5) Logging
+  // 2) LCD
+  // 3) LEDs
+  // 4) Stepper motor
+  // 5) Buttons
+  // 6) Water sensor / ADC
+  // 7) Logging
 
   U0init(9600);
-
+  
+  // Initialize LCD
+  lcd.begin(16, 2);
+  
+  // Initialize LEDs
+  LEDInit();
+  
+  // Initialize Stepper Motor
+  StepperMotorInit();
+  
+  // Initialize Buttons
   StartStopButtonInit();
   ResetButtonInit();
 
+  // Initialize ADC for sensors
   adc_init();
+  
+  // Initialize RTC logging
   initLogging();
-  //put soil sensors init here
-  ProgramStatus = IDLE;  //put as DISABLED in final Program
+  
+  // Start in DISABLED state
+  ProgramStatus = DISABLED;
   ErrorCode = NONE;
+  
+  // Log startup
+  getTimeViaRTC(timestamp, sizeof(timestamp));
+  logEvent("System initialized - DISABLED state", timestamp);
 }
 
-unsigned long MainspreviousTime = 0;
 void loop(void) {
- // CheckifProgramIsOnOrOff();  // Handle Start/Stop button flag
-
-// readResetButton();  // Handle Reset button
-
-  // Reflect state on LEDs
-//  ledStatus();
-/*
+  currentTime = millis();
+  
+  // Handle Start/Stop button flag
+  CheckifProgramIsOnOrOff();
+  
+  // Handle Reset button
+  readResetButton();
+  
+  // Control LEDs based on state
+  LEDControl(ProgramStatus);
+  
+  // Control stepper motor based on state
+  StepperMotorControl(ProgramStatus);
+  
+  // Run stepper motor steps (non-blocking)
+  StepperMotorStep();
+  
+  // State machine
   switch (ProgramStatus) {
     case DISABLED:
-      //sensors off
-      //print to lcd: system disabled
-    //check if pump is still on and if so, turn it off
-     if(isPumpOn)
-     {
-       pumpOff();
-     }
+      // Turn off pump if it's on
+      if(isPumpOn) {
+        pumpOff();
+      }
+      
+      // Display disabled message on LCD
       UpdateLCD("System Disabled");
       break;
 
     case IDLE:
-    
-    //check if pump is still on and if so, turn it off
-     if(isPumpOn)
-     {
-       pumpOff();
-     }
-
-       currentTime = millis();
-      //check for every minute
-      if ((currentTime - MainspreviousTime) >= 60000) {
-        MainspreviousTime = currentTime;
-
-       if(waterlevelcheck() && TempandHumanitySensorCheck())
-        {
-        // Later: soil moisture check & pump control can be added here
-        if (false)  // if (isSoilDry()) uncommit once method is written
-          //if all of the sensors report correct readings then change program status to running
-          ProgramStatus = RUNNING;
-        else
-          println("none");
-          
-         // Println(const String& status, float tempC, int soilPercent);
-
-        }
-
+      // Turn off pump if it's on
+      if(isPumpOn) {
+        pumpOff();
       }
-     
-
+      
+      // Check sensors every minute and update LCD
+      if ((currentTime - MainspreviousTime) >= SENSOR_DISPLAY_INTERVAL_MS) {
+        MainspreviousTime = currentTime;
+        
+        // Read temperature and humidity
+        ReadTempature();
+        float tempC = GetTemperature();
+        float humidity = GetHumidity();
+        
+        // Read soil moisture
+        int soilPercent = ReadSoilSensor();
+        
+        // Update LCD with sensor values
+        String statusStr = "IDLE";
+        updateLCD(statusStr, tempC, soilPercent);
+        
+        // Log sensor readings
+        getTimeViaRTC(timestamp, sizeof(timestamp));
+        char sensorMsg[100];
+        snprintf(sensorMsg, sizeof(sensorMsg), "IDLE: Temp=%.1fC Hum=%.0f%% Soil=%d%%", tempC, humidity, soilPercent);
+        logEvent(sensorMsg, timestamp);
+        
+        // Check water level and temperature/humidity sensors
+        if(waterlevelcheck() && TempandHumanitySensorCheck()) {
+          // Check if soil is dry - if so, transition to RUNNING
+          if (isSoilDry()) {
+            ProgramStatus = RUNNING;
+            ErrorCode = NONE;
+            getTimeViaRTC(timestamp, sizeof(timestamp));
+            logEvent("State change: IDLE -> RUNNING (soil dry)", timestamp);
+          }
+        }
+      } else {
+        // Update LCD periodically even if not time for sensor check
+        if ((currentTime - lastLCDUpdateTime) >= 1000UL) {
+          lastLCDUpdateTime = currentTime;
+          ReadTempature();
+          float tempC = GetTemperature();
+          int soilPercent = ReadSoilSensor();
+          String statusStr = "IDLE";
+          updateLCD(statusStr, tempC, soilPercent);
+        }
+      }
       break;
 
     case RUNNING:
-      //run water and other logic
-      //  simple methods for pumping water from waterpump
-      //water for 3 to 5 seconds at a time untill thw water pump is good
-
-      //after the plant is watered, return back to program IDLE
-      ProgramStatus = IDLE;
+      // Note: Fan motor is broken, so we skip that functionality
+      // But we still need to show RUNNING state
+      
+      // Check sensors every minute and update LCD
+      if ((currentTime - MainspreviousTime) >= SENSOR_DISPLAY_INTERVAL_MS) {
+        MainspreviousTime = currentTime;
+        
+        // Read temperature and humidity
+        ReadTempature();
+        float tempC = GetTemperature();
+        float humidity = GetHumidity();
+        
+        // Read soil moisture
+        int soilPercent = ReadSoilSensor();
+        
+        // Update LCD with sensor values
+        String statusStr = "RUNNING";
+        updateLCD(statusStr, tempC, soilPercent);
+        
+        // Log sensor readings
+        getTimeViaRTC(timestamp, sizeof(timestamp));
+        char sensorMsg[100];
+        snprintf(sensorMsg, sizeof(sensorMsg), "RUNNING: Temp=%.1fC Hum=%.0f%% Soil=%d%%", tempC, humidity, soilPercent);
+        logEvent(sensorMsg, timestamp);
+        
+        // Check water level and temperature/humidity sensors
+        if(waterlevelcheck() && TempandHumanitySensorCheck()) {
+          // Check if soil is still dry
+          if (!isSoilDry()) {
+            // Soil is now moist, return to IDLE
+            ProgramStatus = IDLE;
+            ErrorCode = NONE;
+            getTimeViaRTC(timestamp, sizeof(timestamp));
+            logEvent("State change: RUNNING -> IDLE (soil moist)", timestamp);
+          }
+        }
+      } else {
+        // Update LCD periodically even if not time for sensor check
+        if ((currentTime - lastLCDUpdateTime) >= 1000UL) {
+          lastLCDUpdateTime = currentTime;
+          ReadTempature();
+          float tempC = GetTemperature();
+          int soilPercent = ReadSoilSensor();
+          String statusStr = "RUNNING";
+          updateLCD(statusStr, tempC, soilPercent);
+        }
+      }
       break;
 
     case ERROR:
-      //for error handling
-      //check what error message it is
-      //print error message
-      //make sure pump is off
-      //pumpOff();
+      // Make sure pump is off
+      if(isPumpOn) {
+        pumpOff();
+      }
+      
+      // Display error message on LCD
       ErrorHandling(ErrorCode);
-      break;
-  }
-*/}
-
-/*
-
-// Checks if Start/Stop button event occurred and toggles system state
-void CheckifProgramIsOnOrOff(void) {
-
-  // If button has been pressed (flag set by button ISR)
-  if (StartStopButtonEvent) {
-    // Reset StartStopButtonEvent and previousTime back to zero
-    StartStopButtonEvent = 0;
-    startStopPreviousTime = 0;
-  getTimeViaRTC(timestamp, sizeof(timestamp));
-
-    // Check current system state
-    switch (ProgramStatus) {
-      case DISABLED:
-        // Starts the program
-       // ProgramStatus = IDLE;
-        logEvent("Program on", timestamp);
-        break;
-
-      case IDLE:
-      case RUNNING:
-      case ERROR:
-        // Turns off the program from any active state
-        ProgramStatus = DISABLED;
-        ErrorCode = NONE;
-        logEvent("Program off", timestamp);
-        break;
-    }
-  }
-}
-*/
-
-// Display LED status based on current ProgramStatus
-void ledStatus(void) {
-  switch (ProgramStatus) {
-    case DISABLED:
-      // Yellow LED on, others off
-      break;
-
-    case IDLE:
-      // Green LED on, others off
-      break;
-
-    case RUNNING:
-      // Blue LED on, others off
-      break;
-
-    case ERROR:
-      // Red LED on, others off
       break;
   }
 }
@@ -246,12 +291,11 @@ void ErrorHandling(ErrorCodes &ErrorCode) {
   }
 }
 void pumpOff() {
-  //method to turn pumpoff
+  //method to turn pump off
   isPumpOn = false;
 }
 
-
-void logEvent(const char *msg,const char* timestamp) {
+void logEvent(const char *msg, const char* timestamp) {
     char buffer[200];  // enough for timestamp + message
     snprintf(buffer, sizeof(buffer), "[%s] %s", timestamp, msg);
 

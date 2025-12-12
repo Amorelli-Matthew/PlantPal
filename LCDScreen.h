@@ -3,7 +3,8 @@
 #include <LiquidCrystal.h>
 #include "StatusCodes.h"
 // LCD pins <--> Arduino pins
-const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
+// RS=23, EN=22, D4=2, D5=3, D6=4, D7=5
+const int RS = 23, EN = 22, D4 = 2, D5 = 3, D6 = 4, D7 = 5;
 
 // Accessible everywhere
 extern LiquidCrystal lcd;

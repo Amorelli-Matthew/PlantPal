@@ -5,17 +5,18 @@
 #include "Serial.h"
 #include "StatusCodes.h"
 
-#define StartStopButtonPin    2
+#define StartStopButtonPin    18  // PD3 on Arduino Mega 2560
 #define STARTSTOP_DEBOUNCE_US 1500000UL
 
 #define RESET_DEBOUNCE_US     50000UL     // 50 ms debounce
-#define PC1_BIT               1          // bit 1 = pin 36
+#define PC1_BIT               1          // bit 1 = pin 36 (Reset button)
 
 extern volatile bool StartStopButtonEvent;
 //extern volatile bool ProgramStatus;
 
-extern volatile unsigned char *my_DDRE;
-extern volatile unsigned char *my_PORTE;
+extern volatile unsigned char *my_DDRD;
+extern volatile unsigned char *my_PORTD;
+extern volatile unsigned char *my_PIND;
 extern volatile unsigned char* my_PINC;
 extern volatile unsigned char* my_DDRC;
 extern volatile unsigned char* my_PORTC;
@@ -33,6 +34,9 @@ void CheckifProgramIsOnOrOff();
 
 void ResetButtonInit();
 void readResetButton();
+
+// Forward declaration for logging
+void logEvent(const char *msg, const char* timestamp);
 
 
 

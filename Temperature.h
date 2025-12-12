@@ -19,5 +19,7 @@ extern unsigned long currentTime;
 
 int ReadTempature();
 bool TempandHumanitySensorCheck();
+float GetTemperature(void);
+float GetHumidity(void);
 
 #endif
