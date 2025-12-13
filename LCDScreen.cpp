@@ -32,27 +32,30 @@ void updateLCD(const String& status, float tempC, int soilPercent) {
     // Convert Celsius → Fahrenheit
     float tempF = (tempC * 9.0 / 5.0) + 32.0;
 
-    // Line 1: Status - write directly without clearing to reduce glitchiness
+    // Clear the entire display first to remove any gibberish
+    lcd.clear();
+    delay(2);  // Small delay for clear to complete
+    
+    // Line 1: Write Status
     lcd.setCursor(0, 0);
     lcd.print("Status:");
     lcd.print(status);
-    // Pad with spaces to clear any leftover characters
+    // Pad with spaces to ensure clean display
     int statusLen = 7 + status.length();  // "Status:" is 7 chars
     for (int i = statusLen; i < 16; i++) {
       lcd.print(" ");
     }
 
-    // Line 2: Temp + Soil - write directly without clearing to reduce glitchiness
+    // Line 2: Write Temp + Soil
     lcd.setCursor(0, 1);
     lcd.print("T:");
     lcd.print(tempF, 0);
     lcd.print("F ");
-
+    
     lcd.print("Soil:");
     lcd.print(soilPercent);
     lcd.print("%");
-    // Pad with spaces to clear any leftover characters
-    // Calculate actual length and pad to 16
+    // Pad with spaces to ensure clean display
     int tempLen = (tempF < 10) ? 1 : ((tempF < 100) ? 2 : 3);
     int soilLen = (soilPercent < 10) ? 1 : ((soilPercent < 100) ? 2 : 3);
     int line2Len = 2 + tempLen + 2 + 5 + soilLen + 1;  // "T:" + temp + "F " + "Soil:" + percent + "%"

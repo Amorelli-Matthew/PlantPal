@@ -242,9 +242,9 @@ void loop(void) {
       lcd.display();  // Turn display on
       setLCDContrast(50);  // Ensure contrast is set
       
-      // Refresh LCD every 500ms to prevent fading
+      // Refresh LCD every 1 second to prevent flicker from frequent clears
       static unsigned long lastLCDRefresh = 0;
-      if ((currentTime - lastLCDRefresh) > 500) {  // Refresh every 500ms
+      if ((currentTime - lastLCDRefresh) > 1000) {  // Refresh every 1 second
         lastLCDRefresh = currentTime;
         // Read sensors and update LCD with data
         ReadTempature();
@@ -330,9 +330,9 @@ void loop(void) {
       lcd.display();  // Turn display on
       setLCDContrast(50);  // Ensure contrast is set
       
-      // Refresh LCD every 500ms to prevent glitchiness (same as IDLE/DISABLED)
+      // Refresh LCD every 1 second to prevent flicker from frequent clears
       static unsigned long lastLCDRefreshRunning = 0;
-      if ((currentTime - lastLCDRefreshRunning) > 500) {  // Refresh every 500ms
+      if ((currentTime - lastLCDRefreshRunning) > 1000) {  // Refresh every 1 second
         lastLCDRefreshRunning = currentTime;
         // Read sensors and update LCD
         ReadTempature();
@@ -421,9 +421,9 @@ void loop(void) {
       lcd.display();  // Turn display on
       setLCDContrast(50);  // Ensure contrast is set
       
-      // Refresh LCD every 500ms to prevent fading (same as IDLE)
+      // Refresh LCD every 1 second to prevent flicker from frequent clears
       static unsigned long lastLCDRefreshError = 0;
-      if ((currentTime - lastLCDRefreshError) > 500) {  // Refresh every 500ms
+      if ((currentTime - lastLCDRefreshError) > 1000) {  // Refresh every 1 second
         lastLCDRefreshError = currentTime;
         // Read sensors and update LCD with data (same as IDLE state)
         ReadTempature();

@@ -118,22 +118,44 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 
 ---
 
-## Fan Motor
+## Fan Motor (via Transistor)
 
 | Component     | Arduino Pin | Port          | Notes             |
 | ------------- | ----------- | ------------- | ----------------- |
-| **Fan Motor** | Pin 32      | Port C, bit 7 | Fan motor control |
+| **Fan Motor** | Pin 31      | Port A, bit 7 | Fan motor control |
 
-**Wiring:**
+**Transistor Wiring (NPN Transistor, e.g., 2N2222, BC547):**
 
-- Connect fan motor driver/relay control to pin 32
-- Fan motor power supply: Connect to external power (not Arduino 5V)
-- Fan motor GND: Connect to Arduino GND
+Transistor has 3 pins:
+
+- **Base (B)** → Arduino **Pin 31** via 1kΩ resistor
+- **Collector (C)** → Fan motor **negative (-)** terminal
+- **Emitter (E)** → GND (Arduino GND)
+
+**Fan Motor Wiring:**
+
+1. **Fan Motor Power Supply:**
+
+   - Connect external power supply (7-12V DC) **positive (+)** to fan motor **positive (+)** terminal
+   - Connect external power supply **negative (-)** to GND (common ground with Arduino)
+   - Connect fan motor **negative (-)** terminal to transistor **Collector (C)**
+
+2. **Transistor Control:**
+   - Transistor **Base (B)** → 1kΩ resistor → Arduino **Pin 31**
+   - Transistor **Emitter (E)** → GND
+
+**How It Works:**
+
+- **Active HIGH Transistor**: When Arduino pin 31 is **HIGH (5V)**, the transistor turns ON, allowing current to flow through the fan motor
+- When Arduino pin 31 is **LOW (0V)**, the transistor turns OFF, stopping current flow to the fan motor
+- The transistor acts as an electronic switch, allowing the Arduino to control higher current devices safely
 
 **Note:**
 
-- Fan activates **ONLY** in RUNNING state
-- Fan stops in all other states (DISABLED, IDLE, ERROR)
+- Fan activates **ONLY** in RUNNING state (pin 31 goes HIGH)
+- Fan stops in all other states (DISABLED, IDLE, ERROR) - pin 31 goes LOW
+- **Important**: Use external power supply for the fan motor (not Arduino 5V) to avoid overloading the Arduino
+- **Important**: Always use a base resistor (1kΩ recommended) to protect the transistor and Arduino pin
 
 ---
 
@@ -153,7 +175,7 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 - **Pin 24**: Green LED
 - **Pin 25**: Yellow LED
 - **Pin 26**: Red LED
-- **Pin 32**: Fan Motor
+- **Pin 31**: Fan Motor
 - **Pin 40**: Stepper Motor Wire 1
 - **Pin 41**: Stepper Motor Wire 2
 - **Pin 42**: Stepper Motor Wire 3
@@ -185,7 +207,9 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 - [ ] Soil sensor on A2
 - [ ] Humidity sensor on A4
 - [ ] Stepper motor on pins 40, 41, 42, 43
-- [ ] External power supply connected (7-12V to VIN)
+- [ ] Fan motor transistor connected (Base→Pin 31 via 1kΩ resistor, Emitter→GND, Collector→fan -)
+- [ ] Fan motor wired (fan +→power supply +, fan -→transistor Collector, power supply -→GND)
+- [ ] External power supply connected (7-12V to VIN and fan motor)
 - [ ] All GND connections made
 - [ ] All 5V connections made
 
@@ -210,6 +234,13 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 - **Buttons not working**: Verify pull-up resistors (internal, no external needed)
 - **Sensors reading 0**: Check power and GND connections
 - **Stepper motor not moving**: Verify power supply and pin connections
+- **Fan motor not turning on**:
+  - Check transistor Base is connected to pin 31 via 1kΩ resistor
+  - Verify transistor Emitter is connected to GND
+  - Check fan motor power supply is connected (positive to fan +, negative to GND)
+  - Verify fan motor negative is connected to transistor Collector
+  - Test transistor by manually connecting pin 31 to 5V (should turn fan ON)
+  - If using a PNP transistor instead of NPN, the logic would need to be inverted
 
 ---
 
@@ -217,5 +248,5 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 
 - All timestamps use uptime (not real-time clock)
 - Temperature currently uses fake values (22°C)
-- Fan motor logging is present but physical motor not implemented
+- Fan motor is implemented on pin 31 via transistor (active HIGH: HIGH = ON, LOW = OFF)
 - Serial Monitor shows all state changes and motor activity with timestamps
