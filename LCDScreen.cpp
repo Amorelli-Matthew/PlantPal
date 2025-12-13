@@ -1,27 +1,32 @@
 #include "LCDScreen.h"
-#include "Serial.h"
-#include <string.h>
 
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 
 // Initialize contrast control using PWM
 // LCD V0 pin is connected directly to pin 9 (V0_CONTRAST_PIN)
-// PWM generates 0-5V signal: 0 = darkest, 255 = lightest
-// Typical LCD contrast range: 40-60 (lower values = more visible text)
-void initLCDContrast(void) {
-  pinMode(V0_CONTRAST_PIN, OUTPUT);
-  // Set initial contrast to 80
+void initLCDContrast(void)
+{
+  // PH6 (OC2B) as output
+  DDRH |= (1 << V0_BIT);
+  TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);
+
+  // Start Timer2 with prescaler = clk/64
+  TCCR2B = (1 << CS22);
+
+  // Initial duty (replaces analogWrite default)
   setLCDContrast(80);
 }
 
+
 // Set contrast level (0-255)
 // Lower values = darker/more contrast, higher values = lighter/less contrast
-void setLCDContrast(int contrastLevel) {
-  // Clamp to valid PWM range
-  if (contrastLevel < 0) contrastLevel = 0;
+void setLCDContrast(int contrastLevel)
+{
+  if (contrastLevel < 0)   contrastLevel = 0;
   if (contrastLevel > 255) contrastLevel = 255;
-  
-  analogWrite(V0_CONTRAST_PIN, contrastLevel);
+
+  // Duty cycle for OC2B PWM (replaces analogWrite)
+  OCR2B = (uint8_t)contrastLevel;
 }
 
 void updateLCD(const String& status, float tempC, int soilPercent) {
@@ -34,7 +39,6 @@ void updateLCD(const String& status, float tempC, int soilPercent) {
 
     // Clear the entire display first to remove any gibberish
     lcd.clear();
-    delay(2);  // Small delay for clear to complete
     
     // Line 1: Write Status
     lcd.setCursor(0, 0);
@@ -92,105 +96,24 @@ void UpdateLCD(const char *line1) {
 }
 
 void UpdateLCD(const char *line1, const char *line2) {
-  // Ensure display is on and set contrast
   lcd.display();
-  setLCDContrast(50);  // Use consistent contrast
-  
-  // Clear display first to remove any leftover characters
+  setLCDContrast(50);
+
   lcd.clear();
-  delay(15);  // Small delay for clear to complete
-  lcd.display();  // Ensure display stays on after clear
-  delay(15);  // Additional delay for stability
-  
-  // Print line 1
+  lcd.display();
+
   lcd.setCursor(0, 0);
   lcd.print(line1);
-  // Pad line 1 with spaces to ensure clean display
   int len1 = strlen(line1);
-  for (int i = len1; i < 16; i++) {
-    lcd.print(" ");
-  }
-  
-  // Print line 2
+  for (int i = len1; i < 16; i++) lcd.print(" ");
+
   lcd.setCursor(0, 1);
   lcd.print(line2);
-  // Pad line 2 with spaces to ensure clean display
   int len2 = strlen(line2);
-  for (int i = len2; i < 16; i++) {
-    lcd.print(" ");
-  }
-  
-  // Final display() call to ensure it stays on
+  for (int i = len2; i < 16; i++) lcd.print(" ");
+
   lcd.display();
 }
 
-// Simple test function to verify LCD is working
-void testLCDBasic(void) {
-  // Re-initialize LCD to fix any garbled text issues
-  lcd.begin(16, 2);
-  delay(200);
-  lcd.display();
-  lcd.clear();
-  delay(100);
-  
-  setLCDContrast(100);  // Use moderate contrast for test
-  delay(100);
-  
-  // Test with simple characters first
-  lcd.setCursor(0, 0);
-  lcd.print("LCD TEST 12345");
-  lcd.setCursor(0, 1);
-  lcd.print("ABCDEFGHIJKLM");
-  delay(2000);
-  
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("LCD Working!");
-  lcd.setCursor(0, 1);
-  lcd.print("Contrast: 100");
-  delay(3000);  // Show for 3 seconds so user can see it
-  
-  // Final clear and small delay before returning to normal display
-  lcd.clear();
-  delay(100);
-}
 
-// Test function to cycle through contrast values to find the right one
-void testLCDContrast(void) {
-  // Re-initialize LCD
-  lcd.begin(16, 2);
-  delay(500);
-  lcd.display();
-  lcd.clear();
-  delay(200);
-  
-  // Test a wider range of contrast values
-  // Some LCDs work with very low values, others need higher
-  int contrastValues[] = {0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 120, 150, 180, 200, 220, 240, 255};
-  int numValues = sizeof(contrastValues) / sizeof(contrastValues[0]);
-  
-  for (int i = 0; i < numValues; i++) {
-    int contrast = contrastValues[i];
-    setLCDContrast(contrast);
-    delay(200);
-    
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Contrast Test");
-    lcd.setCursor(0, 1);
-    lcd.print("Value: ");
-    lcd.print(contrast);
-    
-    // Show each value for 3 seconds so you can see which one works
-    delay(3000);
-  }
-  
-  // After cycling, set to a middle value
-  setLCDContrast(50);
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Test Complete");
-  lcd.setCursor(0, 1);
-  lcd.print("Using: 50");
-  delay(3000);
-}
+

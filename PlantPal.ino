@@ -22,7 +22,6 @@ unsigned long lastLCDUpdateTime = 0;
 const unsigned long SENSOR_DISPLAY_INTERVAL_MS = 60000UL;  // 1 minute
 static Status lastDisplayedState = DISABLED;  // Track last displayed state
 
-// Test mode: Set to true to enable manual state testing
 // Press button quickly 3 times to cycle: DISABLED -> IDLE -> RUNNING -> ERROR -> DISABLED
 #define ENABLE_STATE_TEST_MODE true  // Set to true to enable test mode
 static unsigned long lastButtonPressTime = 0;
@@ -48,54 +47,39 @@ void setup(void) {
   U0init(9600);
   
   // Initialize LCD with proper delays
-  // LCD needs time to power up and stabilize (especially with higher voltage)
-  delay(1000);  // Wait longer for power stabilization with higher voltage
-  
-  // Initialize contrast control (PWM on pin 9)
-  // LCD V0 pin is connected directly to pin 9
-  // Lower PWM value = MORE contrast (darker, more visible text)
-  // Higher voltage may require different contrast values
   initLCDContrast();
-  delay(300);  // Give contrast time to settle
   
-  // Initialize LCD with proper sequence
-  // CRITICAL: Make sure RW pin is connected to GND!
+ // Initialize LCD with proper sequence
   lcd.begin(16, 2);
-  delay(500);  // Longer delay for LCD to fully initialize
+
   
   // Set display properties FIRST (before clearing)
   lcd.display();  // Ensure display is on
   lcd.noCursor();  // Turn off cursor
   lcd.noBlink();   // Turn off blink
-  delay(200);
   
   // Set initial contrast to 80
   setLCDContrast(80);
-  delay(300);
   
   // Clear display
   lcd.clear();
-  delay(200);
   
   // Ensure display is still on after clear
   lcd.display();
-  delay(200);
-  
-  // Show startup message with explicit cursor positioning
+   
+  // // Show startup message with explicit cursor positioning
   lcd.setCursor(0, 0);
-  lcd.print("PlantPal v1.0");
-  delay(300);
-  lcd.setCursor(0, 1);
+ lcd.print("PlantPal v1.0");
+ lcd.setCursor(0, 1);
   lcd.print("Initializing...");
-  delay(1500);  // Show initial message longer
+  
   
   // Initialize LEDs
   LEDInit();
-  delay(50);  // Small delay after LED init
-  
+ 
   // Set initial LED state (DISABLED = Yellow LED)
   LEDControl(ProgramStatus);
-  delay(50);
+
   
   // Initialize Stepper Motor
   StepperMotorInit();
@@ -121,15 +105,7 @@ void setup(void) {
   // Log startup
   getTimeViaRTC(timestamp, sizeof(timestamp));
   logEvent("System initialized - DISABLED state", timestamp);
-  
-  // TEST LCD CONTRAST - This will help find the right value
-  // Uncomment the next line to test different contrast values:
-  // testLCDContrast();  // This will test different contrast values - cycles through 10-200
-  
-  // TEST MODE: Uncomment one of these lines to test specific states:
-  // ProgramStatus = ERROR; ErrorCode = ERR_LOW_WATER; lastDisplayedState = ERROR;  // Start in ERROR state (red LED)
-  // ProgramStatus = IDLE; ErrorCode = NONE; lastDisplayedState = IDLE;  // Start in IDLE state (green LED)
-  // ProgramStatus = RUNNING; ErrorCode = NONE; lastDisplayedState = RUNNING;  // Start in RUNNING state (blue LED)
+
 }
 
 void loop(void) {
@@ -147,6 +123,7 @@ void loop(void) {
   // Control stepper motor based on state
   static Status lastStepperState = DISABLED;
   if (ProgramStatus != lastStepperState) {
+  
     // State changed - log stepper motor activity
     getTimeViaRTC(timestamp, sizeof(timestamp));
     if (ProgramStatus == DISABLED) {
@@ -161,6 +138,7 @@ void loop(void) {
   // Control fan motor based on state
   static Status lastFanState = DISABLED;
   if (ProgramStatus != lastFanState) {
+  
     // State changed - log fan motor activity
     getTimeViaRTC(timestamp, sizeof(timestamp));
     if (ProgramStatus == RUNNING) {
@@ -187,14 +165,13 @@ void loop(void) {
       if (lastDisplayedState != DISABLED) {
         // Re-initialize LCD to ensure it works
         lcd.begin(16, 2);
-        delay(300);
-        lcd.display();  // Turn display on first
+       
+       lcd.display();  // Turn display on first
         lcd.clear();
-        delay(200);
-        // Set contrast to 80 for DISABLED state
+       
+       // Set contrast to 80 for DISABLED state
         setLCDContrast(80);
-        delay(200);
-        lastDisplayedState = DISABLED;
+       lastDisplayedState = DISABLED;
       }
       
       // Always show "System Disabled" message with sensor data
@@ -206,7 +183,7 @@ void loop(void) {
       if ((currentTime - lastLCDRefreshDisabled) > 2000) {  // Refresh every 2 seconds
         lastLCDRefreshDisabled = currentTime;
         // Read sensors and update LCD with data
-        ReadTempature();
+        ReadTemperature();
         float tempC = GetTemperature();
         int soilPercent = ReadSoilSensor();
         String statusStr = "DISABLED";
@@ -226,16 +203,15 @@ void loop(void) {
       
       // Initialize LCD when entering IDLE state
       if (lastDisplayedState != IDLE) {
+        
         // Re-initialize LCD to ensure it works
         lcd.begin(16, 2);
-        delay(200);
-        lcd.display();  // Turn display on first
+       lcd.display();  // Turn display on first
         lcd.clear();
-        delay(100);
-        // Set contrast - adjust based on voltage and visibility
+
+       // Set contrast - adjust based on voltage and visibility
         setLCDContrast(50);
-        delay(100);
-        lastDisplayedState = IDLE;
+       lastDisplayedState = IDLE;
       }
       
       // Always show "System IDLE" message with sensor data - refresh continuously to prevent fading
@@ -247,17 +223,17 @@ void loop(void) {
       if ((currentTime - lastLCDRefresh) > 1000) {  // Refresh every 1 second
         lastLCDRefresh = currentTime;
         // Read sensors and update LCD with data
-        ReadTempature();
+        ReadTemperature();
         float tempC = GetTemperature();
         int soilPercent = ReadSoilSensor();
         String statusStr = "IDLE";
         updateLCD(statusStr, tempC, soilPercent);
       }
       
-      // Check soil sensor and state transitions every 5 seconds (faster response)
+      // Check soil sensor and state transitions every 5 seconds
       static unsigned long lastSoilCheck = 0;
-      if ((currentTime - lastSoilCheck) > 5000) {  // Check every 5 seconds
-        lastSoilCheck = currentTime;
+      if ((currentTime - lastSoilCheck) > 5000) 
+      {lastSoilCheck = currentTime;
         
         // Check water level and temperature/humidity sensors
         if(waterlevelcheck() && TempandHumanitySensorCheck()) {
@@ -286,7 +262,7 @@ void loop(void) {
         MainspreviousTime = currentTime;
         
         // Read temperature and humidity
-        ReadTempature();
+        ReadTemperature();
         float tempC = GetTemperature();
         float humidity = GetHumidity();
         
@@ -309,19 +285,21 @@ void loop(void) {
       if (lastDisplayedState != RUNNING) {
         // Re-initialize LCD to ensure it works
         lcd.begin(16, 2);
-        delay(200);
+        
         lcd.display();  // Turn display on first
         lcd.clear();
-        delay(100);
+        
         // Set contrast - adjust based on voltage and visibility
         setLCDContrast(50);
-        delay(100);
+        
         // Read sensors and update LCD immediately
-        ReadTempature();
+        ReadTemperature();
         float tempC = GetTemperature();
         int soilPercent = ReadSoilSensor();
+        
         String statusStr = "RUNNING";
         updateLCD(statusStr, tempC, soilPercent);
+        
         lastDisplayedState = RUNNING;
         lastLCDUpdateTime = currentTime;  // Reset update timer
       }
@@ -334,17 +312,19 @@ void loop(void) {
       static unsigned long lastLCDRefreshRunning = 0;
       if ((currentTime - lastLCDRefreshRunning) > 1000) {  // Refresh every 1 second
         lastLCDRefreshRunning = currentTime;
+        
         // Read sensors and update LCD
-        ReadTempature();
+        ReadTemperature();
         float tempC = GetTemperature();
         int soilPercent = ReadSoilSensor();
+        
         String statusStr = "RUNNING";
         updateLCD(statusStr, tempC, soilPercent);
       }
       
       // Check soil sensor and state transitions every 5 seconds (faster response)
       static unsigned long lastSoilCheckRunning = 0;
-      if ((currentTime - lastSoilCheckRunning) > 5000) {  // Check every 5 seconds
+      if ((currentTime - lastSoilCheckRunning) > 5000) {
         lastSoilCheckRunning = currentTime;
         
         // Check water level and temperature/humidity sensors
@@ -357,9 +337,11 @@ void loop(void) {
             // Soil is critical (< 5%) - transition to ERROR
             ProgramStatus = ERROR;
             ErrorCode = ERR_SOIL_NOT_RECOVERING;
+        
             getTimeViaRTC(timestamp, sizeof(timestamp));
             logEvent("State change: RUNNING -> ERROR (soil critical < 5%)", timestamp);
           } else if (!isSoilDry()) {
+
             // Soil is now moist (>= 50%) - return to IDLE
             ProgramStatus = IDLE;
             ErrorCode = NONE;
@@ -375,7 +357,7 @@ void loop(void) {
         MainspreviousTime = currentTime;
         
         // Read temperature and humidity
-        ReadTempature();
+        ReadTemperature();
         float tempC = GetTemperature();
         float humidity = GetHumidity();
         
@@ -398,22 +380,23 @@ void loop(void) {
       
       // Initialize LCD when entering ERROR state
       if (lastDisplayedState != ERROR) {
+        
         // Re-initialize LCD to ensure it works (same as IDLE)
         lcd.begin(16, 2);
-        delay(200);
+        
         lcd.display();  // Turn display on first
         lcd.clear();
-        delay(100);
+
         // Set contrast - adjust based on voltage and visibility
         setLCDContrast(50);
-        delay(100);
+
         // Immediately show ERROR message after initialization
-        ReadTempature();
+        ReadTemperature();
         float tempC = GetTemperature();
         int soilPercent = ReadSoilSensor();
+
         String statusStr = "ERROR";
         updateLCD(statusStr, tempC, soilPercent);
-        delay(100);  // Give LCD time to display
         lastDisplayedState = ERROR;
       }
       
@@ -425,10 +408,12 @@ void loop(void) {
       static unsigned long lastLCDRefreshError = 0;
       if ((currentTime - lastLCDRefreshError) > 1000) {  // Refresh every 1 second
         lastLCDRefreshError = currentTime;
-        // Read sensors and update LCD with data (same as IDLE state)
-        ReadTempature();
+
+       // Read sensors and update LCD with data (same as IDLE state)
+        ReadTemperature();
         float tempC = GetTemperature();
         int soilPercent = ReadSoilSensor();
+
         String statusStr = "ERROR";
         updateLCD(statusStr, tempC, soilPercent);
       }

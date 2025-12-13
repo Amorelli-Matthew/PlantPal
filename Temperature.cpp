@@ -1,66 +1,53 @@
 #include "Temperature.h"
-#include "WaterSensor.h"  // Use ADC functions from WaterSensor
 
-int ReadTempature() {
-  currentTime = millis();
+void ReadTemperature() {
+  unsigned long now = millis();
+  if ((now - lastTempCheckTime) < TEMP_READ_INTERVAL_MS) return;
+  lastTempCheckTime = now;
 
-  // Only update timing every 3 seconds (for consistency with original code)
-  if ((currentTime - lastTempCheckTime) >= 3000UL) {
-    lastTempCheckTime = currentTime;
-    
-    // Read humidity sensor from A4 (ADC channel 4)
-    unsigned int sum = 0;
-    for (int i = 0; i < 8; i++) {
-      sum += adc_read(4);  // A4 = ADC channel 4
-    }
-    unsigned int avgValue = sum / 8;
-    
-    // Convert ADC value (0-1023) to humidity percentage (0-100%)
-    // Adjust this conversion based on your sensor's characteristics
-    // Typical range: 0-1023 maps to 0-100% humidity
-    humidity = (avgValue * 100.0) / 1023.0;
-    
-    // Clamp humidity to valid range (0-100%)
-    if (humidity > 100.0) humidity = 100.0;
-    if (humidity < 0.0) humidity = 0.0;
-    
-    // Temperature still using stub value (20.0°C) until we have a sensor
-    // You can add temperature reading here if you have a sensor
+  // SIM NOTE: use read11 for the DHT11 in your simulator
+  int chk = DHT.read11(DHT11_PIN);
+
+  if (chk == TEMP_READ_SUCCESS) {
+    temperature     = roundf(DHT.temperature);
+    humidity        = roundf(DHT.humidity);
+    hasValidSample  = true;
+  } else {
+    print("DHT read failed, code=");
+    println(chk);
   }
-
-  // Return success code
-  return TEMP_READ_SUCCESS;
 }
 
 bool TempandHumanitySensorCheck() {
-  // DHT library removed - always return true with stub values
-  int status = ReadTempature();
+  ReadTemperature();
 
-  // Check if status indicates an error
-  if (status != TEMP_READ_SUCCESS) {
-    int tempIntTemp = (int) temperature;
-    int TempIntHum = (int) humidity;
+  if (!hasValidSample) return false; // don't judge until we have real data
 
-    bool tempInvalid = (tempIntTemp < 0 || tempIntTemp > 50);
-    bool humidityInvalid = (TempIntHum < 20 || TempIntHum > 90);
+  int t = (int)temperature;
+  int h = (int)humidity;
 
-    if (tempInvalid || humidityInvalid) {
-      ProgramStatus = ERROR;
-      ErrorCode = ERR_DHT_SENSOR_FAULT;
-      return false;
-    }
+  bool tempInvalid = (t < 0 || t > 50);
+  bool humInvalid  = (h < 20 || h > 90);
+
+  if (tempInvalid || humInvalid) {
+   println("ERROR HERE");
+
+    // If water level low, then set ProgramStatus to ERROR and set the error status to low water
+    ProgramStatus = ERROR;
+    ErrorCode = ERR_LOW_WATER;
+
+    return false;
   }
-  
-  // With stub values, always return true
+
   return true;
 }
 
-float GetTemperature(void) {
+float GetTemperature(void)
+{
   return temperature;
 }
 
-float GetHumidity(void) {
+float GetHumidity(void)
+{
   return humidity;
 }
-
-

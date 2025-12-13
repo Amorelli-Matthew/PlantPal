@@ -10,7 +10,6 @@
 #define STARTSTOP_DEBOUNCE_US 1500000UL
 
 extern volatile bool StartStopButtonEvent;
-//extern volatile bool ProgramStatus;
 
 extern volatile unsigned char *my_DDRD;
 extern volatile unsigned char *my_PORTD;

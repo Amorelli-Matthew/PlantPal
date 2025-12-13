@@ -4,7 +4,6 @@
 #include "StatusCodes.h"
 
 // LED pins: Yellow 25, Green 24, Red 26, Blue 12
-// Arduino Mega 2560 pin mappings:
 // Pin 24 = PA2 (Port A, bit 2)
 // Pin 25 = PA3 (Port A, bit 3)
 // Pin 26 = PA4 (Port A, bit 4)

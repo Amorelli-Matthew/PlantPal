@@ -16,10 +16,10 @@ volatile unsigned char *my_PORTL = (unsigned char *)0x10B;  // PORTL
 
 // Stepper motor step sequence (4-step sequence for full step)
 static const unsigned char stepSequence[4] = {
-  0b1010,  // Step 0: pins 41,43 HIGH; 40,42 LOW
-  0b0110,  // Step 1: pins 40,43 HIGH; 41,42 LOW
-  0b0101,  // Step 2: pins 40,42 HIGH; 41,43 LOW
-  0b1001   // Step 3: pins 41,42 HIGH; 40,43 LOW
+  0b1010,  // Step 0: pins 41,43
+  0b0110,  // Step 1: pins 40,43
+  0b0101,  // Step 2: pins 40,42
+  0b1001   // Step 3: pins 41,42
 };
 
 static int currentStep = 0;

@@ -1,9 +1,7 @@
 #include "Button.h"
 #include "Logging.h"
 
-// -----------------------------------------------------------------------------
 // Globals
-// -----------------------------------------------------------------------------
 // Port D registers for pin 18 (PD3)
 volatile unsigned char *my_DDRD  = (unsigned char *)0x2A;  // DDRD
 volatile unsigned char *my_PORTD = (unsigned char *)0x2B;  // PORTD
@@ -14,17 +12,14 @@ volatile unsigned char *my_DDRJ  = (unsigned char *)0x105;  // DDRJ
 volatile unsigned char *my_PORTJ = (unsigned char *)0x106;  // PORTJ
 volatile unsigned char *my_PINJ  = (unsigned char *)0x104;  // PINJ
 
-// true  = program running
-// false = program stopped
-//volatile bool ProgramStatus        = false;
+
 // set by ISR when a valid press is detected, cleared in main loop
 volatile bool StartStopButtonEvent = false;
 
 // separate timing for Start/Stop debounce
 static volatile unsigned long startStopLastInterruptUs = 0;
-// -----------------------------------------------------------------------------
+
 // Start/Stop button
-// -----------------------------------------------------------------------------
 void StartStopButtonInit()
 {
   // Pin 18 = PD3, configure as input with pull-up
@@ -34,12 +29,11 @@ void StartStopButtonInit()
   attachInterrupt(digitalPinToInterrupt(StartStopButtonPin), StartStopISR, FALLING);
 }
 
-// Reset button initialization
-// Note: Pin 14 doesn't support hardware interrupts, so we use polling instead
 void ResetButtonInit()
 {
-  // Pin 14 = PJ1, configure as input with pull-up using Arduino function
-  pinMode(ResetButtonPin, INPUT_PULLUP);
+
+  *my_DDRJ  &= ~(1 << 1);   // PJ1 as input
+  *my_PORTJ |=  (1 << 1);   // enable internal pull-up
 }
 
 // Called regularly from loop() to apply the effect of a press
@@ -86,50 +80,46 @@ void StartStopISR()
   StartStopButtonEvent     = true;  // signal main loop that a valid press occurred
 }
 
-// Called regularly from loop() to check reset button (polling method)
-// Pin 14 doesn't support interrupts, so we poll it instead
+// Reset button is PJ1 (Pin 14), active-low with pull-up
 void CheckResetButton()
 {
   static unsigned long lastResetCheck = 0;
-  static bool lastButtonState = true;  // true = not pressed (pull-up)
-  static unsigned long pressStartTime = 0;
-  
+  static bool lastPressed = false;          // previous debounced pressed state
+  static unsigned long pressStartTime = 0;  // for debounce timing
+  static bool fired = false;                // prevents retrigger while held
+
   unsigned long now = millis();
-  
-  // Check button state every 20ms (polling)
-  if ((now - lastResetCheck) < 20) {
-    return;
-  }
+
+  // Poll every 20ms
+  if (now - lastResetCheck < 20) return;
   lastResetCheck = now;
-  
-  // Read pin 14 using digitalRead - LOW means button is pressed (pull-up resistor)
-  bool currentButtonState = digitalRead(ResetButtonPin) == LOW;
-  
-  // Detect button press (transition from not pressed to pressed)
-  if (currentButtonState && !lastButtonState) {
-    // Button was just pressed - start debounce timer
+
+  // Raw read: pressed when PJ1 reads 0 (active-low)
+  bool pressedRaw = ((*my_PINJ & (1 << 1)) == 0);
+
+  // Edge: just went down -> start debounce timer
+  if (pressedRaw && !lastPressed && pressStartTime == 0) {
     pressStartTime = now;
   }
-  
-  // If button is pressed and held for at least 50ms (debounce)
-  if (currentButtonState && (now - pressStartTime) > 50) {
-    // Button is confirmed pressed - reset system
-    pressStartTime = 0;  // Reset timer
-    
-    // Get timestamp for logging
-    char timestamp[30];
-    getTimeViaRTC(timestamp, sizeof(timestamp));
-    
-    // Reset system to IDLE state and clear all errors
+
+  // If released, clear timers/flags so next press can trigger
+  if (!pressedRaw) {
+    pressStartTime = 0;
+    fired = false;
+    lastPressed = false;
+    return;
+  }
+
+  // Still pressed: confirm after 50ms debounce
+  if (!fired && pressStartTime != 0 && (now - pressStartTime) >= 50) {
+    fired = true;          // lock until release
+    lastPressed = true;
+
+    // Log + reset state (non-blocking)
+  char timestamp[30];
+  getTimeViaRTC(timestamp, sizeof(timestamp));
     ProgramStatus = IDLE;
     ErrorCode = NONE;
     logEvent("System reset - returning to IDLE state", timestamp);
-    
-    // Wait for button release to prevent multiple triggers
-    while (digitalRead(ResetButtonPin) == LOW) {
-      delay(10);  // Wait for button release
-    }
   }
-  
-  lastButtonState = currentButtonState;
 }

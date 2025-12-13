@@ -20,7 +20,8 @@ extern volatile unsigned char *my_PORTL;
 void StepperMotorInit(void);
 void StepperMotorControl(Status state);
 void StepperMotorStep(void);
-void StepperMotorSetLowPower(bool enable);  // Enable/disable low power mode
 
+// Enable/disable low power mode
+void StepperMotorSetLowPower(bool enable); 
 #endif
 

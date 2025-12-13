@@ -3,9 +3,12 @@
 
 #include <Arduino.h>
 #include "StatusCodes.h"
+#include "Serial.h"
+#include "Logging.h"
+#include "Serial.h"
+#include "Logging.h"
 
 // Fan motor pin: 31
-// Using digitalWrite/pinMode (same as test code that worked)
 
 void FanMotorInit(void);
 void FanMotorControl(Status state);
