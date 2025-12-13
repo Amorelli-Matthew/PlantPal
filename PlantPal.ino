@@ -7,6 +7,7 @@
 #include "SoilSensor.h"
 #include "LEDControl.h"
 #include "StepperMotor.h"
+#include "FanMotor.h"
 #include "LCDScreen.h"
 
 Status ProgramStatus = DISABLED;
@@ -47,49 +48,60 @@ void setup(void) {
   U0init(9600);
   
   // Initialize LCD with proper delays
-  // LCD needs time to power up and stabilize
-  delay(500);  // Wait longer for power stabilization
+  // LCD needs time to power up and stabilize (especially with higher voltage)
+  delay(1000);  // Wait longer for power stabilization with higher voltage
   
   // Initialize contrast control (PWM on pin 9)
   // LCD V0 pin is connected directly to pin 9
-  // PWM will control contrast: 0-255 (lower values = more visible, try 40-60)
+  // Lower PWM value = MORE contrast (darker, more visible text)
+  // Higher voltage may require different contrast values
   initLCDContrast();
-  delay(100);
+  delay(300);  // Give contrast time to settle
   
   // Initialize LCD with proper sequence
+  // CRITICAL: Make sure RW pin is connected to GND!
   lcd.begin(16, 2);
-  delay(100);  // Wait after begin
+  delay(500);  // Longer delay for LCD to fully initialize
   
-  // Clear display multiple times to ensure it's reset
-  lcd.clear();
-  delay(50);
-  lcd.clear();
-  delay(50);
-  
-  // Set display properties
+  // Set display properties FIRST (before clearing)
   lcd.display();  // Ensure display is on
   lcd.noCursor();  // Turn off cursor
   lcd.noBlink();   // Turn off blink
-  delay(100);
+  delay(200);
   
-  // Final clear before use
-  lcd.clear();
-  delay(50);
+  // Set initial contrast to 80
+  setLCDContrast(80);
+  delay(300);
   
-  // Show startup message
+  // Clear display
   lcd.clear();
+  delay(200);
+  
+  // Ensure display is still on after clear
+  lcd.display();
+  delay(200);
+  
+  // Show startup message with explicit cursor positioning
   lcd.setCursor(0, 0);
   lcd.print("PlantPal v1.0");
-  delay(100);
+  delay(300);
   lcd.setCursor(0, 1);
   lcd.print("Initializing...");
-  delay(1000);  // Show initial message longer
+  delay(1500);  // Show initial message longer
   
   // Initialize LEDs
   LEDInit();
+  delay(50);  // Small delay after LED init
+  
+  // Set initial LED state (DISABLED = Yellow LED)
+  LEDControl(ProgramStatus);
+  delay(50);
   
   // Initialize Stepper Motor
   StepperMotorInit();
+  
+  // Initialize Fan Motor
+  FanMotorInit();
   
   // Initialize Buttons
   StartStopButtonInit();
@@ -110,8 +122,9 @@ void setup(void) {
   getTimeViaRTC(timestamp, sizeof(timestamp));
   logEvent("System initialized - DISABLED state", timestamp);
   
-  // UNCOMMENT THE NEXT LINE TO TEST LCD WHEN GREEN LIGHT IS ON:
-  // testLCDBasic();  // This will test if LCD is working - uncomment to use
+  // TEST LCD CONTRAST - This will help find the right value
+  // Uncomment the next line to test different contrast values:
+  // testLCDContrast();  // This will test different contrast values - cycles through 10-200
   
   // TEST MODE: Uncomment one of these lines to test specific states:
   // ProgramStatus = ERROR; ErrorCode = ERR_LOW_WATER; lastDisplayedState = ERROR;  // Start in ERROR state (red LED)
@@ -145,6 +158,20 @@ void loop(void) {
   }
   StepperMotorControl(ProgramStatus);
   
+  // Control fan motor based on state
+  static Status lastFanState = DISABLED;
+  if (ProgramStatus != lastFanState) {
+    // State changed - log fan motor activity
+    getTimeViaRTC(timestamp, sizeof(timestamp));
+    if (ProgramStatus == RUNNING) {
+      logEvent("Fan motor: ACTIVATED (Running state)", timestamp);
+    } else {
+      logEvent("Fan motor: STOPPED", timestamp);
+    }
+    lastFanState = ProgramStatus;
+  }
+  FanMotorControl(ProgramStatus);
+  
   // Run stepper motor steps (non-blocking)
   StepperMotorStep();
   
@@ -160,23 +187,23 @@ void loop(void) {
       if (lastDisplayedState != DISABLED) {
         // Re-initialize LCD to ensure it works
         lcd.begin(16, 2);
-        delay(200);
+        delay(300);
+        lcd.display();  // Turn display on first
         lcd.clear();
-        delay(100);
-        lcd.display();
-        // Use lower contrast for DISABLED to reduce flashing
-        setLCDContrast(40);
-        delay(100);
+        delay(200);
+        // Set contrast to 80 for DISABLED state
+        setLCDContrast(80);
+        delay(200);
         lastDisplayedState = DISABLED;
       }
       
-      // Always show "System Disabled" message with sensor data - refresh continuously to prevent fading
+      // Always show "System Disabled" message with sensor data
       lcd.display();  // Turn display on
-      setLCDContrast(40);  // Lower contrast to reduce flashing
+      setLCDContrast(80);  // Use contrast 80 for DISABLED state
       
-      // Refresh LCD every 500ms to prevent glitchiness (same as IDLE)
+      // Refresh LCD less frequently to reduce glitchiness (every 2 seconds instead of 500ms)
       static unsigned long lastLCDRefreshDisabled = 0;
-      if ((currentTime - lastLCDRefreshDisabled) > 500) {  // Refresh every 500ms
+      if ((currentTime - lastLCDRefreshDisabled) > 2000) {  // Refresh every 2 seconds
         lastLCDRefreshDisabled = currentTime;
         // Read sensors and update LCD with data
         ReadTempature();
@@ -202,18 +229,18 @@ void loop(void) {
         // Re-initialize LCD to ensure it works
         lcd.begin(16, 2);
         delay(200);
+        lcd.display();  // Turn display on first
         lcd.clear();
         delay(100);
-        lcd.display();
-        // Lower values = MORE contrast (darker text). Since 40-50 was faint, try 30-35
-        setLCDContrast(35);
+        // Set contrast - adjust based on voltage and visibility
+        setLCDContrast(50);
         delay(100);
         lastDisplayedState = IDLE;
       }
       
       // Always show "System IDLE" message with sensor data - refresh continuously to prevent fading
       lcd.display();  // Turn display on
-      setLCDContrast(35);  // Lower value = more contrast (darker, more visible text)
+      setLCDContrast(50);  // Ensure contrast is set
       
       // Refresh LCD every 500ms to prevent fading
       static unsigned long lastLCDRefresh = 0;
@@ -275,9 +302,6 @@ void loop(void) {
       break;
 
     case RUNNING:
-      // Note: Fan motor is broken, so we skip that functionality
-      // But we still need to show RUNNING state
-      
       // Disable low power mode in RUNNING state (use full speed)
       StepperMotorSetLowPower(false);
       
@@ -286,10 +310,11 @@ void loop(void) {
         // Re-initialize LCD to ensure it works
         lcd.begin(16, 2);
         delay(200);
+        lcd.display();  // Turn display on first
         lcd.clear();
         delay(100);
-        lcd.display();
-        setLCDContrast(35);
+        // Set contrast - adjust based on voltage and visibility
+        setLCDContrast(50);
         delay(100);
         // Read sensors and update LCD immediately
         ReadTempature();
@@ -299,15 +324,11 @@ void loop(void) {
         updateLCD(statusStr, tempC, soilPercent);
         lastDisplayedState = RUNNING;
         lastLCDUpdateTime = currentTime;  // Reset update timer
-        
-        // Log fan motor activation (required by rubric)
-        getTimeViaRTC(timestamp, sizeof(timestamp));
-        logEvent("Fan motor: ACTIVATED (Running state)", timestamp);
       }
       
       // Always show "RUNNING" message - refresh continuously to prevent fading
       lcd.display();  // Turn display on
-      setLCDContrast(35);  // Same contrast as IDLE
+      setLCDContrast(50);  // Ensure contrast is set
       
       // Refresh LCD every 500ms to prevent glitchiness (same as IDLE/DISABLED)
       static unsigned long lastLCDRefreshRunning = 0;
@@ -338,18 +359,12 @@ void loop(void) {
             ErrorCode = ERR_SOIL_NOT_RECOVERING;
             getTimeViaRTC(timestamp, sizeof(timestamp));
             logEvent("State change: RUNNING -> ERROR (soil critical < 5%)", timestamp);
-            // Log fan motor stopping (required by rubric - fan must stop on error)
-            getTimeViaRTC(timestamp, sizeof(timestamp));
-            logEvent("Fan motor: STOPPED (Error state)", timestamp);
           } else if (!isSoilDry()) {
             // Soil is now moist (>= 50%) - return to IDLE
             ProgramStatus = IDLE;
             ErrorCode = NONE;
             getTimeViaRTC(timestamp, sizeof(timestamp));
             logEvent("State change: RUNNING -> IDLE (soil moist >= 50%)", timestamp);
-            // Log fan motor stopping when leaving RUNNING state
-            getTimeViaRTC(timestamp, sizeof(timestamp));
-            logEvent("Fan motor: STOPPED (Idle state)", timestamp);
           }
           // If soil is between 5% and 50%, stay in RUNNING
         }
@@ -383,23 +398,15 @@ void loop(void) {
       
       // Initialize LCD when entering ERROR state
       if (lastDisplayedState != ERROR) {
-        println("DEBUG: Entering ERROR - initializing LCD");
         // Re-initialize LCD to ensure it works (same as IDLE)
         lcd.begin(16, 2);
         delay(200);
+        lcd.display();  // Turn display on first
         lcd.clear();
         delay(100);
-        lcd.clear();  // Clear twice to ensure "Initializing..." is gone
+        // Set contrast - adjust based on voltage and visibility
+        setLCDContrast(50);
         delay(100);
-        lcd.display();
-        // Use moderate contrast for ERROR state
-        setLCDContrast(35);
-        delay(100);
-        // Clear display one more time to ensure clean start
-        lcd.clear();
-        delay(100);
-        lcd.display();
-        delay(50);
         // Immediately show ERROR message after initialization
         ReadTempature();
         float tempC = GetTemperature();
@@ -412,7 +419,7 @@ void loop(void) {
       
       // Always show "ERROR" message with sensor data - refresh continuously to prevent fading
       lcd.display();  // Turn display on
-      setLCDContrast(35);  // Same contrast as IDLE
+      setLCDContrast(50);  // Ensure contrast is set
       
       // Refresh LCD every 500ms to prevent fading (same as IDLE)
       static unsigned long lastLCDRefreshError = 0;

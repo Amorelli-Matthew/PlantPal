@@ -10,10 +10,8 @@ LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 // Typical LCD contrast range: 40-60 (lower values = more visible text)
 void initLCDContrast(void) {
   pinMode(V0_CONTRAST_PIN, OUTPUT);
-  // Start with comfortable contrast value (lower = less bright/flashing)
-  // If text is too dark/invisible: increase value (try 70, 80, 90)
-  // If text is still too bright/flashing: decrease value (try 50, 40)
-  setLCDContrast(120);  // Increased to 120 for better visibility when motor is running
+  // Set initial contrast to 80
+  setLCDContrast(80);
 }
 
 // Set contrast level (0-255)
@@ -27,16 +25,14 @@ void setLCDContrast(int contrastLevel) {
 }
 
 void updateLCD(const String& status, float tempC, int soilPercent) {
-    // Ensure display is always on
+    // Ensure display is always on and contrast is set
     lcd.display();
-    
-    // Don't clear every time - just overwrite to prevent flickering
-    // Only clear if we need to (when status changes significantly)
+    setLCDContrast(80);  // Use contrast 80
     
     // Convert Celsius → Fahrenheit
     float tempF = (tempC * 9.0 / 5.0) + 32.0;
 
-    // Line 1: Status (overwrite existing text)
+    // Line 1: Status - write directly without clearing to reduce glitchiness
     lcd.setCursor(0, 0);
     lcd.print("Status:");
     lcd.print(status);
@@ -46,7 +42,7 @@ void updateLCD(const String& status, float tempC, int soilPercent) {
       lcd.print(" ");
     }
 
-    // Line 2: Temp + Soil (overwrite existing text)
+    // Line 2: Temp + Soil - write directly without clearing to reduce glitchiness
     lcd.setCursor(0, 1);
     lcd.print("T:");
     lcd.print(tempF, 0);
@@ -56,8 +52,11 @@ void updateLCD(const String& status, float tempC, int soilPercent) {
     lcd.print(soilPercent);
     lcd.print("%");
     // Pad with spaces to clear any leftover characters
-    // Rough estimate: "T:XXF Soil:XX%" is about 15 chars, pad to 16
-    for (int i = 0; i < 2; i++) {
+    // Calculate actual length and pad to 16
+    int tempLen = (tempF < 10) ? 1 : ((tempF < 100) ? 2 : 3);
+    int soilLen = (soilPercent < 10) ? 1 : ((soilPercent < 100) ? 2 : 3);
+    int line2Len = 2 + tempLen + 2 + 5 + soilLen + 1;  // "T:" + temp + "F " + "Soil:" + percent + "%"
+    for (int i = line2Len; i < 16; i++) {
       lcd.print(" ");
     }
     
@@ -92,7 +91,7 @@ void UpdateLCD(const char *line1) {
 void UpdateLCD(const char *line1, const char *line2) {
   // Ensure display is on and set contrast
   lcd.display();
-  setLCDContrast(35);  // Use same contrast as other states
+  setLCDContrast(50);  // Use consistent contrast
   
   // Clear display first to remove any leftover characters
   lcd.clear();
@@ -124,22 +123,17 @@ void UpdateLCD(const char *line1, const char *line2) {
 
 // Simple test function to verify LCD is working
 void testLCDBasic(void) {
-  println("LCD Test: Turning display on...");
-  
   // Re-initialize LCD to fix any garbled text issues
   lcd.begin(16, 2);
-  delay(100);
-  lcd.clear();
-  delay(50);
-  lcd.clear();  // Clear twice to ensure reset
-  delay(50);
-  
+  delay(200);
   lcd.display();
+  lcd.clear();
+  delay(100);
+  
   setLCDContrast(100);  // Use moderate contrast for test
   delay(100);
   
   // Test with simple characters first
-  lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("LCD TEST 12345");
   lcd.setCursor(0, 1);
@@ -153,10 +147,47 @@ void testLCDBasic(void) {
   lcd.print("Contrast: 100");
   delay(3000);  // Show for 3 seconds so user can see it
   
-  // Restore contrast
-  setLCDContrast(120);
-  
   // Final clear and small delay before returning to normal display
   lcd.clear();
   delay(100);
+}
+
+// Test function to cycle through contrast values to find the right one
+void testLCDContrast(void) {
+  // Re-initialize LCD
+  lcd.begin(16, 2);
+  delay(500);
+  lcd.display();
+  lcd.clear();
+  delay(200);
+  
+  // Test a wider range of contrast values
+  // Some LCDs work with very low values, others need higher
+  int contrastValues[] = {0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 120, 150, 180, 200, 220, 240, 255};
+  int numValues = sizeof(contrastValues) / sizeof(contrastValues[0]);
+  
+  for (int i = 0; i < numValues; i++) {
+    int contrast = contrastValues[i];
+    setLCDContrast(contrast);
+    delay(200);
+    
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Contrast Test");
+    lcd.setCursor(0, 1);
+    lcd.print("Value: ");
+    lcd.print(contrast);
+    
+    // Show each value for 3 seconds so you can see which one works
+    delay(3000);
+  }
+  
+  // After cycling, set to a middle value
+  setLCDContrast(50);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Test Complete");
+  lcd.setCursor(0, 1);
+  lcd.print("Using: 50");
+  delay(3000);
 }

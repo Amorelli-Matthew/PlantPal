@@ -3,6 +3,7 @@
 This guide contains all pin assignments for rewiring your PlantPal system.
 
 ## Power Supply
+
 - **External Power Supply**: 7-12V DC (recommended for stable operation with LCD and motors)
 - **Arduino Mega 2560**: Connect external power to VIN and GND
 - **Breadboard Power**: Connect 5V and GND rails to breadboard
@@ -11,14 +12,15 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 
 ## LEDs (Status Indicators)
 
-| LED Color | Arduino Pin | State |
-|-----------|-------------|-------|
-| **Yellow** | Pin 25 | DISABLED state |
-| **Green** | Pin 24 | IDLE state |
-| **Red** | Pin 26 | ERROR state |
-| **Blue** | Pin 12 | RUNNING state |
+| LED Color  | Arduino Pin | State          |
+| ---------- | ----------- | -------------- |
+| **Yellow** | Pin 25      | DISABLED state |
+| **Green**  | Pin 24      | IDLE state     |
+| **Red**    | Pin 26      | ERROR state    |
+| **Blue**   | Pin 12      | RUNNING state  |
 
 **Wiring:**
+
 - Each LED: Anode (long leg) → Pin via 220Ω resistor
 - Each LED: Cathode (short leg) → GND
 
@@ -26,12 +28,13 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 
 ## Buttons
 
-| Button | Arduino Pin | Type | Notes |
-|--------|-------------|------|-------|
-| **Start/Stop** | Pin 18 | Interrupt-capable | Uses hardware interrupt (ISR) |
-| **Reset** | Pin 14 | Polling | Uses software polling (no interrupt) |
+| Button         | Arduino Pin | Type              | Notes                                |
+| -------------- | ----------- | ----------------- | ------------------------------------ |
+| **Start/Stop** | Pin 18      | Interrupt-capable | Uses hardware interrupt (ISR)        |
+| **Reset**      | Pin 14      | Polling           | Uses software polling (no interrupt) |
 
 **Wiring:**
+
 - One side of button → Pin
 - Other side of button → GND
 - Internal pull-up resistors are enabled in code (no external resistors needed)
@@ -40,21 +43,24 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 
 ## LCD Display (16x2 Character LCD)
 
-| LCD Pin | Arduino Pin | Function |
-|---------|-------------|----------|
-| VSS | GND | Ground |
-| VDD | 5V | Power |
-| V0 | Pin 9 (PWM) | Contrast (PWM controlled, no potentiometer needed) |
-| RS | Pin 23 | Register Select |
-| EN | Pin 22 | Enable |
-| D4 | Pin 2 | Data bit 4 |
-| D5 | Pin 53 | Data bit 5 |
-| D6 | Pin 5 | Data bit 6 |
-| D7 | Pin 49 | Data bit 7 |
-| A (Backlight +) | 5V via 220Ω resistor | Backlight anode |
-| K (Backlight -) | GND | Backlight cathode |
+| LCD Pin         | Arduino Pin          | Function                                                      |
+| --------------- | -------------------- | ------------------------------------------------------------- |
+| VSS             | GND                  | Ground                                                        |
+| VDD             | 5V                   | Power                                                         |
+| V0              | Pin 9 (PWM)          | Contrast (PWM controlled, no potentiometer needed)            |
+| RS              | Pin 35               | Register Select                                               |
+| **RW**          | **GND**              | **Read/Write (MUST be connected to GND for write-only mode)** |
+| EN              | Pin 22               | Enable                                                        |
+| D4              | Pin 2                | Data bit 4                                                    |
+| D5              | Pin 53               | Data bit 5                                                    |
+| D6              | Pin 5                | Data bit 6                                                    |
+| D7              | Pin 49               | Data bit 7                                                    |
+| A (Backlight +) | 5V via 220Ω resistor | Backlight anode                                               |
+| K (Backlight -) | GND                  | Backlight cathode                                             |
 
 **Notes:**
+
+- **IMPORTANT**: RW pin MUST be connected to GND (negative) - this is critical for LCD to work!
 - Contrast is controlled via PWM on pin 9 (no potentiometer needed)
 - Backlight should be on (connected to 5V and GND)
 
@@ -62,25 +68,25 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 
 ## Sensors (Analog)
 
-| Sensor | Arduino Pin | ADC Channel | Notes |
-|--------|-------------|-------------|-------|
-| **Water Level** | A0 | Channel 0 | Analog sensor |
-| **Soil Moisture** | A2 | Channel 2 | Analog sensor |
-| **Humidity** | A4 | Channel 4 | Analog sensor (currently reading from A4) |
-| **DHT11 Temperature** | Pin 8 (Digital) | N/A | Digital sensor (currently not connected/using fake values) |
+| Sensor                | Arduino Pin     | ADC Channel | Notes                                                      |
+| --------------------- | --------------- | ----------- | ---------------------------------------------------------- |
+| **Water Level**       | A0              | Channel 0   | Analog sensor                                              |
+| **Soil Moisture**     | A2              | Channel 2   | Analog sensor                                              |
+| **Humidity**          | A4              | Channel 4   | Analog sensor (currently reading from A4)                  |
+| **DHT11 Temperature** | Pin 8 (Digital) | N/A         | Digital sensor (currently not connected/using fake values) |
 
 **Wiring:**
-- **Water Sensor (A0)**: 
+
+- **Water Sensor (A0)**:
   - S pin → A0
-  - + → 5V (or breadboard power)
+  - - → 5V (or breadboard power)
   - - → GND
-  
 - **Soil Sensor (A2)**:
   - Signal → A2
   - VCC → 5V (or breadboard power)
   - GND → GND
-  
 - **Humidity Sensor (A4)**:
+
   - Signal → A4
   - VCC → 5V (or breadboard power)
   - GND → GND
@@ -95,14 +101,15 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 
 ## Stepper Motor (Vent Control)
 
-| Motor Wire | Arduino Pin | Port | Notes |
-|------------|-------------|------|-------|
-| Wire 1 | Pin 40 | Port G, bit 1 | Stepper motor control |
-| Wire 2 | Pin 41 | Port G, bit 0 | Stepper motor control |
-| Wire 3 | Pin 42 | Port L, bit 7 | Stepper motor control |
-| Wire 4 | Pin 43 | Port L, bit 6 | Stepper motor control |
+| Motor Wire | Arduino Pin | Port          | Notes                 |
+| ---------- | ----------- | ------------- | --------------------- |
+| Wire 1     | Pin 40      | Port G, bit 1 | Stepper motor control |
+| Wire 2     | Pin 41      | Port G, bit 0 | Stepper motor control |
+| Wire 3     | Pin 42      | Port L, bit 7 | Stepper motor control |
+| Wire 4     | Pin 43      | Port L, bit 6 | Stepper motor control |
 
 **Wiring:**
+
 - Connect stepper motor driver to pins 40, 41, 42, 43
 - Motor power supply: Connect to external power (not Arduino 5V)
 - Motor GND: Connect to Arduino GND
@@ -111,18 +118,29 @@ This guide contains all pin assignments for rewiring your PlantPal system.
 
 ---
 
-## Fan Motor (Optional - Currently Not Implemented)
+## Fan Motor
 
-The code logs fan motor activity, but the physical fan motor is not currently wired. If you add it:
-- Connect fan motor to appropriate driver/relay
-- Fan activates in RUNNING state
-- Fan stops in ERROR state and when leaving RUNNING state
+| Component     | Arduino Pin | Port          | Notes             |
+| ------------- | ----------- | ------------- | ----------------- |
+| **Fan Motor** | Pin 32      | Port C, bit 7 | Fan motor control |
+
+**Wiring:**
+
+- Connect fan motor driver/relay control to pin 32
+- Fan motor power supply: Connect to external power (not Arduino 5V)
+- Fan motor GND: Connect to Arduino GND
+
+**Note:**
+
+- Fan activates **ONLY** in RUNNING state
+- Fan stops in all other states (DISABLED, IDLE, ERROR)
 
 ---
 
 ## Complete Pin Summary
 
 ### Digital Pins:
+
 - **Pin 2**: LCD D4
 - **Pin 5**: LCD D6
 - **Pin 8**: DHT11 DATA (optional, not currently used)
@@ -131,10 +149,11 @@ The code logs fan motor activity, but the physical fan motor is not currently wi
 - **Pin 14**: Reset Button
 - **Pin 18**: Start/Stop Button
 - **Pin 22**: LCD EN
-- **Pin 23**: LCD RS
+- **Pin 35**: LCD RS
 - **Pin 24**: Green LED
 - **Pin 25**: Yellow LED
 - **Pin 26**: Red LED
+- **Pin 32**: Fan Motor
 - **Pin 40**: Stepper Motor Wire 1
 - **Pin 41**: Stepper Motor Wire 2
 - **Pin 42**: Stepper Motor Wire 3
@@ -143,11 +162,13 @@ The code logs fan motor activity, but the physical fan motor is not currently wi
 - **Pin 53**: LCD D5
 
 ### Analog Pins:
+
 - **A0**: Water Level Sensor
 - **A2**: Soil Moisture Sensor
 - **A4**: Humidity Sensor
 
 ### Power:
+
 - **5V**: Power for sensors, LCD, LEDs
 - **GND**: Common ground for all components
 - **VIN**: External power input (7-12V recommended)
@@ -159,7 +180,7 @@ The code logs fan motor activity, but the physical fan motor is not currently wi
 - [ ] All LEDs connected (Yellow 25, Green 24, Red 26, Blue 12)
 - [ ] Start/Stop button on pin 18
 - [ ] Reset button on pin 14
-- [ ] LCD fully wired (RS=23, EN=22, D4=2, D5=53, D6=5, D7=49, V0=9)
+- [ ] LCD fully wired (RS=35, EN=22, D4=2, D5=53, D6=5, D7=49, V0=9, RW=GND)
 - [ ] Water sensor on A0
 - [ ] Soil sensor on A2
 - [ ] Humidity sensor on A4
@@ -184,7 +205,7 @@ The code logs fan motor activity, but the physical fan motor is not currently wi
 
 ## Troubleshooting
 
-- **LCD not displaying**: Check contrast (pin 9), verify all data pins
+- **LCD not displaying**: Check contrast (pin 9), verify all data pins, **ensure RW is connected to GND**
 - **LEDs not working**: Check pin assignments and resistor values
 - **Buttons not working**: Verify pull-up resistors (internal, no external needed)
 - **Sensors reading 0**: Check power and GND connections
@@ -198,4 +219,3 @@ The code logs fan motor activity, but the physical fan motor is not currently wi
 - Temperature currently uses fake values (22°C)
 - Fan motor logging is present but physical motor not implemented
 - Serial Monitor shows all state changes and motor activity with timestamps
-
