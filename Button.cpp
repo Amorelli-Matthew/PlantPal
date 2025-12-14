@@ -8,9 +8,9 @@ volatile unsigned char *my_PORTD = (unsigned char *)0x2B;  // PORTD
 volatile unsigned char *my_PIND  = (unsigned char *)0x29;  // PIND
 
 // Port J registers for pin 14 (PJ1)
-volatile unsigned char *my_DDRJ  = (unsigned char *)0x105;  // DDRJ
-volatile unsigned char *my_PORTJ = (unsigned char *)0x106;  // PORTJ
-volatile unsigned char *my_PINJ  = (unsigned char *)0x104;  // PINJ
+volatile unsigned char *my_DDRJ  = (unsigned char *)0x104;  // DDRJ
+volatile unsigned char *my_PORTJ = (unsigned char *)0x105;  // PORTJ
+volatile unsigned char *my_PINJ  = (unsigned char *)0x103;  // PINJ
 
 
 // set by ISR when a valid press is detected, cleared in main loop
